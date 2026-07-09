@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Rgjny&apos;s Blog</title><description>Bug bounty writeups &amp; cybersecurity research</description><link>https://rgjny.me</link><item><title>Email-Based User Enumeration</title><link>https://rgjny.me/posts/email-based-user-enumeration</link><guid isPermaLink="true">https://rgjny.me/posts/email-based-user-enumeration</guid><pubDate>Sun, 04 Jan 2026 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;This Blog is related to privacy-related vulnerability that I reported to a &lt;strong&gt;private bug bounty program&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;The issue was classified as an &lt;strong&gt;Information Disclosure&lt;/strong&gt; vulnerability with &lt;strong&gt;Medium severity (5.3)&lt;/strong&gt;.&lt;br /&gt;
+It allowed retrieving &lt;strong&gt;any user’s account information using only the email address associated with the account&lt;/strong&gt;.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h2&gt;Background&lt;/h2&gt;
+&lt;p&gt;While testing an &lt;strong&gt;Android application&lt;/strong&gt;, this was actually my &lt;strong&gt;first time seriously testing mobile assets&lt;/strong&gt;.&lt;br /&gt;
+I wasn’t deeply familiar with Android internals yet, so I focused on reviewing API usage and unused endpoints exposed in the app.&lt;/p&gt;
+&lt;p&gt;I had already hunted on the &lt;strong&gt;same target’s web application&lt;/strong&gt;, so I had a good understanding of the platform’s functionality and data model.&lt;/p&gt;
+&lt;p&gt;During API enumeration, I noticed an endpoint that was &lt;strong&gt;present in the API list but not actively used&lt;/strong&gt; by the app. That immediately caught my attention.&lt;/p&gt;
+&lt;p&gt;The endpoint was:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;api.target.com/find/users
+&lt;/code&gt;&lt;/pre&gt;
+&lt;hr /&gt;
+&lt;h2&gt;Initial Testing&lt;/h2&gt;
+&lt;p&gt;I started by sending a &lt;code&gt;GET&lt;/code&gt; request.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Response:&lt;/strong&gt; &lt;code&gt;405 Method Not Allowed&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;So I switched to a &lt;code&gt;POST&lt;/code&gt; request.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Response:&lt;/strong&gt; &lt;code&gt;402 Bad Request&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Error message indicated: &lt;code&gt;Content-Type: application/json required&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;I added the proper content type adn retried&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Response:&lt;/strong&gt; &lt;code&gt;username not found&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;At this point, things started getting interesting.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h2&gt;Dead Ends &amp;amp; Breakthrough&lt;/h2&gt;
+&lt;p&gt;At first, I was excited and thought this could turn into a high severity vulnerability but&lt;/p&gt;
+&lt;p&gt;I first tried sending a &lt;strong&gt;username&lt;/strong&gt; belonging to my target account.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Response:&lt;/strong&gt; &lt;code&gt;username not found&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;i thought maybe userid might work&lt;/p&gt;
+&lt;p&gt;so then tried using a &lt;strong&gt;user ID&lt;/strong&gt;.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Response:&lt;/strong&gt; still &lt;code&gt;username not found&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;That was disappointing, and honestly, I thought the endpoint might be broken or useless.&lt;br /&gt;
+I saved the request and decided to analyze it later.&lt;/p&gt;
+&lt;p&gt;While reviewing the &lt;strong&gt;Android login request&lt;/strong&gt; in Burp history, I noticed something important:&lt;br /&gt;
+The account login request looked like this:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;POST /login HTTP/1.1
+Host: api.target.com
+
+username=&amp;lt;EMAIL&amp;gt;&amp;amp;password=&amp;lt;PASSWORD&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;That gave me an idea that maybe the application was treating the email address as the username.&lt;/p&gt;
+&lt;p&gt;and then tried using a &lt;strong&gt;Email Id&lt;/strong&gt;.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Response:&lt;/strong&gt; &lt;code&gt;200 Ok&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Response:&lt;/strong&gt; &lt;code&gt;full metadata of email connected account &lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;That confirmed the issue.!!&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2&gt;Steps To Reproduce:&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;Create new account&lt;/li&gt;
+&lt;li&gt;A POST request is made with a JSON payload containing the target email address.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre&gt;&lt;code&gt;POST /find/users
+Authorization: Bearer &amp;lt;VALID_API_TOKEN&amp;gt;
+Content-Type: application/json
+
+{
+  &quot;username&quot;: &quot;target_user@example.com&quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;ol&gt;
+&lt;li&gt;— The API responds with user metadata,
+including:&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;Internal user Info&lt;/li&gt;
+&lt;li&gt;Account creation timestamps&lt;/li&gt;
+&lt;li&gt;Public profile URL&lt;/li&gt;
+&lt;li&gt;Account tier&lt;/li&gt;
+&lt;li&gt;Billing info&lt;/li&gt;
+&lt;li&gt;Capabilities &amp;amp; feature flags&lt;/li&gt;
+&lt;li&gt;Email addresses linked to the account&lt;/li&gt;
+&lt;li&gt;Team and membership metadata&lt;/li&gt;
+&lt;li&gt;Location metadata (if set)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Impact&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Confirmation of email registration status&lt;/li&gt;
+&lt;li&gt;Collection of detailed user profiles at scale&lt;/li&gt;
+&lt;li&gt;Mapping of users to teams/organizations&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;While not containing direct PII like full billing addresses, the exposed metadata is far more than what should be accessible without authentication or consent&lt;/p&gt;
+&lt;h2&gt;Timeline&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;⮞&lt;strong&gt;September 5, 2025&lt;/strong&gt; — Report submitted with proposed Critical severity&lt;/li&gt;
+&lt;li&gt;⮞&lt;strong&gt;~20 minutes later&lt;/strong&gt; — Passed initial analyst review
+Same day&lt;/li&gt;
+&lt;li&gt;⮞Briefly marked as &lt;strong&gt;Duplicate&lt;/strong&gt; (of a report targeting a different endpoint using user ID)
+Quick appeal&lt;/li&gt;
+&lt;li&gt;⮞Explained the distinction: &lt;strong&gt;different endpoint&lt;/strong&gt;, &lt;strong&gt;different input&lt;/strong&gt; (email vs ID), broader enumeration potential&lt;/li&gt;
+&lt;li&gt;⮞&lt;strong&gt;~1 hour later&lt;/strong&gt; :
+Analyst reopened, apologized, and moved to program review&lt;/li&gt;
+&lt;li&gt;⮞&lt;strong&gt;~2 hours later&lt;/strong&gt; :
+Program downgraded to Medium severity, but acknowledged the unique endpoint and additional exposed fields (e.g., team metadata)
+Shortly after&lt;/li&gt;
+&lt;li&gt;⮞Resolved with monetary reward ($$$)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Program comment:
+&quot;We’re already aware that several of our APIs expose extended metadata due to shared response structures... While the root cause is similar to previous reports, you’ve highlighted a distinct endpoint and surfaced additional details... Although this information isn’t highly sensitive on its own, we agree it’s worth tracking.&quot;&lt;/p&gt;
+&lt;h2&gt;Final Thoughts&lt;/h2&gt;
+&lt;p&gt;Sometimes a quick appeal with clear technical distinction can turn a duplicate into a valid finding. Politeness and precision pay off.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Stay curious, hunt responsibly. 🔍&lt;/p&gt;
+&lt;/blockquote&gt;
+</content:encoded><author>rgjny</author></item><item><title>Anthropic Leaked Their Own Source Code and the Internet Lost Its Mind</title><link>https://rgjny.me/posts/claude-code-leak-blog</link><guid isPermaLink="true">https://rgjny.me/posts/claude-code-leak-blog</guid><pubDate>Mon, 06 Apr 2026 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;March 31, 2026. One day before April Fools. Anthropic — the $380 billion &quot;safety-first&quot; AI lab — accidentally shipped the complete source code of Claude Code to the public npm registry.&lt;/p&gt;
+&lt;p&gt;No hack. No exploit. No insider threat. Just one missing line in a config file.&lt;/p&gt;
+&lt;p&gt;512,000 lines of TypeScript. 1,906 files. The whole thing. Anyone could download it, no login required, straight from Anthropic&apos;s own cloud storage.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h2&gt;How It Started&lt;/h2&gt;
+&lt;p&gt;At 4:23 AM ET, a security researcher named &lt;strong&gt;Chaofan Shou&lt;/strong&gt; — an intern at blockchain firm Fuzzland, ex-Berkeley PhD dropout — posted on X:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;em&gt;&quot;Claude code source code has been leaked via a map file in their npm registry!&quot;&lt;/em&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;He included a direct link to a zip file sitting on Anthropic&apos;s Cloudflare R2 bucket. No auth. No password. Just there.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;./assets/chaofan-tweet.png&quot; alt=&quot;Chaofan Shou original tweet announcing the Claude Code leak&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;The post hit &lt;strong&gt;34 million views&lt;/strong&gt;. Developers immediately started mirroring it everywhere. Within two hours the repo hit &lt;strong&gt;50,000 GitHub stars&lt;/strong&gt; — reportedly the fastest any repo has ever done that. By the time Anthropic pulled the package it had been forked &lt;strong&gt;41,500+ times&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;Someone on X put it perfectly:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;gt; Anthropic ships Claude Code as an npm package
+&amp;gt; someone runs `ls` on the source map
+&amp;gt; entire codebase just sitting there. unobfuscated.
+&amp;gt; plugins, skills, tools, hooks, commands - everything
+&amp;gt; internal architecture of the most hyped AI coding agent, fully readable
+&amp;gt; security through obscurity lasted about 3 months
+&lt;/code&gt;&lt;/pre&gt;
+&lt;hr /&gt;
+&lt;h2&gt;What Actually Happened Technically&lt;/h2&gt;
+&lt;p&gt;Claude Code is distributed as an npm package — &lt;code&gt;@anthropic-ai/claude-code&lt;/code&gt;. When you publish a JavaScript package, your bundler sometimes generates &lt;code&gt;.map&lt;/code&gt; files. These are source maps — debugging tools that bridge the gap between minified production code and the original source files. They have absolutely no business being in a production release.&lt;/p&gt;
+&lt;p&gt;Anthropic uses &lt;strong&gt;Bun&lt;/strong&gt; as their JavaScript runtime (they acquired Bun at the end of 2025). Bun generates source maps by default. The &lt;code&gt;.map&lt;/code&gt; file — &lt;code&gt;cli.js.map&lt;/code&gt; — was &lt;strong&gt;60 megabytes&lt;/strong&gt; and it contained a URL pointing directly to a zip archive on Anthropic&apos;s R2 storage. Chaofan followed the URL, downloaded the zip, and that was that.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;./assets/sourcemap-r2.png&quot; alt=&quot;The cli.js.map file referencing Anthropic&apos;s R2 storage bucket URL&quot; /&gt;
+&lt;img src=&quot;./assets/npmimage.png&quot; alt=&quot;The cli.js.map file referencing Anthropic&apos;s R2 storage bucket URL&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;The fix would have been one of these:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;# Option 1 — add to .npmignore
+*.map
+
+# Option 2 — configure package.json files field to exclude debug artifacts
+
+# Option 3 — build flag
+bun build --no-sourcemap
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;None of those happened. As software engineer Gabriel Anhaia wrote: &lt;em&gt;&quot;a single misconfigured &lt;code&gt;.npmignore&lt;/code&gt; or &lt;code&gt;files&lt;/code&gt; field in &lt;code&gt;package.json&lt;/code&gt; can expose everything.&quot;&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;What makes it worse — there was already an open bug filed on &lt;strong&gt;March 11&lt;/strong&gt; (&lt;code&gt;oven-sh/bun#28001&lt;/code&gt;), three weeks before the leak, specifically reporting that Bun was generating source maps in production mode when it wasn&apos;t supposed to. The bug was sitting there, open, unactioned.&lt;/p&gt;
+&lt;p&gt;Anthropic&apos;s official response: &lt;em&gt;&quot;This was a release packaging issue caused by human error, not a security breach. We&apos;re rolling out measures to prevent this from happening again.&quot;&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;And here&apos;s the kicker — &lt;strong&gt;this wasn&apos;t even the first time&lt;/strong&gt;. On Claude Code&apos;s actual launch day in February 2025, a developer named Dave Shoemaker found an 18-million-character inline source map in the same package. It was quietly fixed. No big deal at the time. Apparently the lesson only half stuck.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h2&gt;What Was Inside&lt;/h2&gt;
+&lt;p&gt;The community spent days digging through 512,000 lines of TypeScript. Here&apos;s everything worth knowing.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h3&gt;KAIROS — Claude Running While You Sleep&lt;/h3&gt;
+&lt;p&gt;The biggest find. Referenced over &lt;strong&gt;150 times&lt;/strong&gt; across the codebase.&lt;/p&gt;
+&lt;p&gt;Right now Claude Code is reactive — you ask, it does. KAIROS flips that completely. It&apos;s a fully built autonomous daemon mode, where Claude runs in the background even when your terminal is closed.&lt;/p&gt;
+&lt;p&gt;What it does:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Runs on 5-minute cron cycles, periodically checking in&lt;/li&gt;
+&lt;li&gt;Subscribes to GitHub webhooks and reacts to code changes on its own&lt;/li&gt;
+&lt;li&gt;Sends &lt;strong&gt;push notifications to your phone&lt;/strong&gt; when it does something&lt;/li&gt;
+&lt;li&gt;Delivers files it created without you asking&lt;/li&gt;
+&lt;li&gt;Watches your pull requests and responds autonomously&lt;/li&gt;
+&lt;li&gt;Keeps append-only daily logs of everything it noticed, decided, did — it cannot erase its own history&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Then there&apos;s &lt;strong&gt;autoDream&lt;/strong&gt; — a background sub-agent that fires when you&apos;re idle. It goes through everything Claude learned during the day, merges observations, removes contradictions, converts vague notes into confirmed facts. Basically Claude doing its homework while you&apos;re not watching.&lt;/p&gt;
+&lt;p&gt;Close your laptop Friday. Open it Monday. KAIROS has been working the whole weekend.&lt;/p&gt;
+&lt;p&gt;It&apos;s fully built. Not a prototype. Just sitting behind a feature flag that compiles to &lt;code&gt;false&lt;/code&gt; in the public release.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h3&gt;Undercover Mode — The One That Started Arguments&lt;/h3&gt;
+&lt;p&gt;Found in &lt;code&gt;undercover.ts&lt;/code&gt;. 89 lines. The most controversial thing in the whole codebase.&lt;/p&gt;
+&lt;p&gt;When an Anthropic employee is working in a &lt;strong&gt;public open-source repo&lt;/strong&gt;, the system automatically activates undercover mode. It:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Injects a system prompt telling Claude to &lt;em&gt;&quot;not blow your cover&quot;&lt;/em&gt; and to &lt;em&gt;&quot;NEVER mention you are an AI&quot;&lt;/em&gt;&lt;/li&gt;
+&lt;li&gt;Strips all &lt;code&gt;Co-Authored-By&lt;/code&gt; git attribution (the metadata that shows AI was involved in a commit)&lt;/li&gt;
+&lt;li&gt;Checks against an allowlist of 22 internal repos — if the current repo isn&apos;t on that list, undercover mode stays on&lt;/li&gt;
+&lt;li&gt;There is &lt;strong&gt;no force-off switch&lt;/strong&gt; — you can force it ON with &lt;code&gt;CLAUDE_CODE_UNDERCOVER=1&lt;/code&gt; but you cannot force it off&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The code comment literally says: &lt;em&gt;&quot;The anthropics org contains PUBLIC repos (e.g. anthropics/claude-code). Undercover mode must stay ON in those.&quot;&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;./assets/undercover-ts.png&quot; alt=&quot;undercover.ts showing system prompt injection and Co-Authored-By stripping&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;The intent is probably protecting internal codenames from leaking into public commit history. That&apos;s understandable. But the reaction from the open source community was not charitable. The most upvoted comment on Hacker News: &lt;em&gt;&quot;if a tool is willing to conceal its own identity in commits, what else is it willing to conceal?&quot;&lt;/em&gt;&lt;/p&gt;
+&lt;h2&gt;And then there was the observation that went viral: Anthropic built AI-powered leak prevention into the product. Then humans accidentally shipped the entire source code through a &lt;code&gt;.npmignore&lt;/code&gt; oversight.&lt;/h2&gt;
+&lt;h3&gt;They&apos;re Tracking Your Rage With a Regex&lt;/h3&gt;
+&lt;p&gt;This one made everyone laugh and also feel slightly watched.&lt;/p&gt;
+&lt;p&gt;There&apos;s a file called &lt;code&gt;userPromptKeywords.ts&lt;/code&gt; — 27 lines — that runs a regex against every single message you send to Claude Code:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;/\b(wtf|wth|ffs|omfg|shit(ty|tiest)?|dumbass|horrible|awful|
+piss(ed|ing)? off|piece of (shit|crap|junk)|what the (fuck|hell)|
+fucking? (broken|useless|terrible|awful|horrible)|fuck you|
+screw (this|you)|so frustrating|this sucks|damn it)\b/
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;When it matches, it fires a telemetry event — &lt;code&gt;tengu_input_prompt&lt;/code&gt; with &lt;code&gt;is_negative: true&lt;/code&gt;. That&apos;s it. It doesn&apos;t change Claude&apos;s behavior at all. It just silently logs that you&apos;re having a bad time.&lt;/p&gt;
+&lt;p&gt;Developer Rahat Chowdhury on X: &lt;em&gt;&quot;Anthropic is tracking how often you rage at your AI.&quot;&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;The community was split between &quot;lol&quot; and &quot;that&apos;s actually kind of smart.&quot; Running an LLM inference to check if someone typed &quot;wtf&quot; would cost real money. A regex is fast, cheap, and accurate enough. Peak engineering pragmatism. But also — the world&apos;s most advanced AI company doing sentiment analysis with &lt;code&gt;Ctrl+F&lt;/code&gt; is genuinely funny.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h3&gt;BUDDY — A Tamagotchi in Your Terminal&lt;/h3&gt;
+&lt;p&gt;This was supposed to be the April Fools surprise. The rollout window was literally coded as &lt;strong&gt;April 1–7&lt;/strong&gt; in the source — announced one day early, by accident.&lt;/p&gt;
+&lt;p&gt;BUDDY is a full Tamagotchi-style companion system:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;18 species with rarity tiers (common 60% → legendary 1%)&lt;/li&gt;
+&lt;li&gt;1% shiny odds per species&lt;/li&gt;
+&lt;li&gt;RPG stats: &lt;code&gt;DEBUGGING&lt;/code&gt;, &lt;code&gt;PATIENCE&lt;/code&gt;, &lt;code&gt;CHAOS&lt;/code&gt;, &lt;code&gt;WISDOM&lt;/code&gt;, &lt;code&gt;SNARK&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Personality and name generated from your user ID on first hatch&lt;/li&gt;
+&lt;li&gt;Its own speech bubble and voice, separate from Claude&lt;/li&gt;
+&lt;li&gt;Buddy interactions don&apos;t count toward your usage quota&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&quot;./assets/buddy-terminal.gif&quot; alt=&quot;BUDDY ASCII creature sitting in the Claude Code terminal footer&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;The most delightful detail buried in the code: one pet name collided with an internal model codename in the build scanner&apos;s blocked-strings list. So the team encoded all 18 species names as hex (&lt;code&gt;String.fromCharCode()&lt;/code&gt;) to stop the build system from flagging them. They literally had to hide the word &quot;duck&quot; from their own security tooling.&lt;/p&gt;
+&lt;p&gt;When people actually typed &lt;code&gt;/buddy&lt;/code&gt; on April 1, the reaction wasn&apos;t &quot;yeah I already knew about this from the leak.&quot; It was closer to &quot;wait, they built &lt;em&gt;how much&lt;/em&gt; of this?&quot; As one writer put it — Anthropic&apos;s April Fools joke became an April Fools joke on Anthropic.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h3&gt;ULTRAPLAN and the Rest of the Unreleased Roadmap&lt;/h3&gt;
+&lt;p&gt;44 hidden feature flags. 20+ unshipped capabilities. A roadmap Anthropic never meant to make public.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;ULTRAPLAN&lt;/strong&gt; offloads complex planning to a remote cloud container running Opus 4.6 with up to 30 minutes of dedicated think time — for big architectural work that would exceed local compute. Paired with KAIROS, this would turn Claude Code from a session assistant into something closer to a permanent background developer.&lt;/p&gt;
+&lt;p&gt;Also in there: voice mode with full push-to-talk, browser control via Playwright, multi-agent coordinator spawning parallel worker Claudes, cron scheduling, agents that sleep and self-resume. All built. All behind flags.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h3&gt;Anti-Distillation — Poisoning Competitor Training Data&lt;/h3&gt;
+&lt;p&gt;There&apos;s a flag called &lt;code&gt;ANTI_DISTILLATION_CC&lt;/code&gt;. When active, Claude Code injects fake tool definitions into API requests — designed to corrupt the training data of any competitor trying to learn from Claude&apos;s outputs through model distillation.&lt;/p&gt;
+&lt;p&gt;There&apos;s also a second mechanism: server-side summarization that buffers Claude&apos;s reasoning between tool calls, returns only signed summaries. Harder to scrape usefully.&lt;/p&gt;
+&lt;p&gt;Then there&apos;s &lt;strong&gt;client attestation&lt;/strong&gt; buried in the Zig layer of the Bun binary — requests include a hash that cryptographically proves they came from a genuine Claude Code binary. This is the real reason OpenCode kept hitting walls after Anthropic&apos;s legal notice. They weren&apos;t just being blocked legally, they were being blocked at the binary level. Third-party tools literally couldn&apos;t fake being Claude Code.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h3&gt;Internal Codenames and That Regression Nobody Wanted Public&lt;/h3&gt;
+&lt;p&gt;The code surfaced internal model names:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Capybara&lt;/strong&gt; — Claude 4.6&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Fennec&lt;/strong&gt; — Opus 4.6&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Numbat&lt;/strong&gt; — unreleased, still in testing&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;And an uncomfortable internal benchmark: Capybara v8 has a &lt;strong&gt;false claims rate of 29–30%&lt;/strong&gt;, up from 16.7% in v4. A clear regression. The industry usually buries this kind of thing in vague &quot;we&apos;re improving hallucination rates&quot; language. Now it&apos;s public and every competitor has a concrete number to work with.&lt;/p&gt;
+&lt;p&gt;There was also this comment in &lt;code&gt;autoCompact.ts&lt;/code&gt; that got passed around:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;// BQ 2026-03-10: 1,279 sessions had 50+ consecutive failures
+// (up to 3,272) in a single session, wasting ~250K API calls/day globally.
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The fix: cap failures at 3. Three lines of code. The comment includes the date it was measured — March 10 — meaning the waste had been running for some unknown period before anyone quantified it.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h2&gt;The Security Mess That Followed&lt;/h2&gt;
+&lt;p&gt;The leak didn&apos;t happen in a vacuum. The exact same day, a completely separate &lt;strong&gt;supply chain attack&lt;/strong&gt; hit axios — an npm package Claude Code directly depends on.&lt;/p&gt;
+&lt;p&gt;If you ran &lt;code&gt;npm install&lt;/code&gt; or updated Claude Code on &lt;strong&gt;March 31 between 00:21 and 03:29 UTC&lt;/strong&gt;, you might have pulled a trojanized version (&lt;code&gt;1.14.1&lt;/code&gt; or &lt;code&gt;0.30.4&lt;/code&gt;) containing a Remote Access Trojan. Check your lockfile for a dependency called &lt;code&gt;plain-crypto-js&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;You can check quickly:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;grep -r &quot;plain-crypto-js&quot; package-lock.json yarn.lock bun.lockb
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;On top of that, bad actors moved fast:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Typosquatting npm packages appeared within hours, targeting developers trying to compile the leaked source&lt;/li&gt;
+&lt;li&gt;Fake GitHub repos disguised as &quot;official&quot; mirrors started spreading Vidar Stealer and GhostSocks malware&lt;/li&gt;
+&lt;li&gt;Security researchers noted the full source gives attackers a detailed map of Claude Code&apos;s permission system and hook logic — making targeted exploits significantly easier&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Simple rule: don&apos;t download, build, or run anything from unofficial sources claiming to be leaked Claude Code. Use the &lt;a href=&quot;https://docs.anthropic.com/en/docs/claude-code/getting-started&quot;&gt;native installer&lt;/a&gt; which doesn&apos;t rely on npm at all.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h2&gt;The DMCA Situation&lt;/h2&gt;
+&lt;p&gt;Anthropic filed copyright takedowns against &lt;strong&gt;8,000+ GitHub repos&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;It went sideways. The takedown accidentally swept up repos that had nothing to do with the leak — including forks of Anthropic&apos;s own public Claude Code repository. They had to emergency-withdraw most of the requests and GitHub restored access to the collateral-damaged repos.&lt;/p&gt;
+&lt;p&gt;The internet found the whole thing pretty ironic. An AI company with a complicated history around training data and copyright, suddenly very eager to protect IP when it was their code on the line.&lt;/p&gt;
+&lt;p&gt;By that point it didn&apos;t really matter anyway. The code was on IPFS. Clean-room rewrites were already circulating in Python and Rust. The fastest-growing GitHub repo in history doesn&apos;t un-grow.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h2&gt;The @k1rallik Thread — How X Actually Saw This&lt;/h2&gt;
+&lt;p&gt;Most news coverage focused on &quot;oops, packaging mistake.&quot; The @k1rallik thread on X put it in broader context and got 2.5 million views:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;em&gt;&quot;What does it look like when a $380 billion company wins a war with the Pentagon, survives the first autonomous AI cyberattack in history, leaks a secret model that terrifies its own creators — and ships their source code publicly by accident? It looks exactly like this. And the scariest part hasn&apos;t happened yet.&quot;&lt;/em&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Their point: zoom out. In the six months before this leak — a Chinese state-sponsored hacking group used Claude to autonomously attack 30 organizations with only 4-6 human interventions per campaign. Then a model spec leak. Then this. All at one company. All in one stretch.&lt;/p&gt;
+&lt;p&gt;Whether you buy the dramatic framing or not, the accumulation of events is real and the timing is genuinely hard to ignore.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h2&gt;Was It an Accident?&lt;/h2&gt;
+&lt;p&gt;People speculated. The timing was suspicious — day before April Fools, BUDDY rollout window literally coded as April 1-7, the code quality being suspiciously clean and impressive.&lt;/p&gt;
+&lt;p&gt;It wasn&apos;t staged. Lead Stories did a proper fact-check on the &quot;April Fools stunt&quot; claim spreading on social media. Anthropic confirmed directly: human error, not intentional. The 8,000 DMCA strikes make it obvious — you don&apos;t file those on your own planned PR stunt.&lt;/p&gt;
+&lt;p&gt;The most likely chain of events: Anthropic acquired Bun, Bun has a known production bug with source maps, someone on the release team didn&apos;t check, the open bug wasn&apos;t marked critical, and version 2.1.88 shipped with 60MB of internal TypeScript attached to it.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h2&gt;Timeline&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Date&lt;/th&gt;
+&lt;th&gt;What happened&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Feb 24, 2025&lt;/td&gt;
+&lt;td&gt;Source map leak on Claude Code launch day. Quietly fixed.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Mar 11, 2026&lt;/td&gt;
+&lt;td&gt;Bun bug filed — source maps in production mode. Left open.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Mar 31 00:21 UTC&lt;/td&gt;
+&lt;td&gt;Axios supply chain attack begins.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Mar 31 morning&lt;/td&gt;
+&lt;td&gt;v2.1.88 pushed to npm with &lt;code&gt;cli.js.map&lt;/code&gt; included.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Mar 31 04:23 ET&lt;/td&gt;
+&lt;td&gt;Chaofan Shou posts. 34 million views.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Next 2 hours&lt;/td&gt;
+&lt;td&gt;50,000 GitHub stars. 41,500+ forks. Code everywhere.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;~08:00 UTC&lt;/td&gt;
+&lt;td&gt;Anthropic pulls v2.1.88. Issues statement.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Apr 1&lt;/td&gt;
+&lt;td&gt;BUDDY launches via &lt;code&gt;/buddy&lt;/code&gt;. Most people already knew.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Apr 3&lt;/td&gt;
+&lt;td&gt;DMCA takedowns against 8,000+ repos. Collateral damage. Emergency withdrawal.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Ongoing&lt;/td&gt;
+&lt;td&gt;Trojanized forks spreading malware. Typosquatting continuing.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr /&gt;
+&lt;p&gt;The code quality, honestly, impressed most people who actually read it. Clean architecture, thorough bash security (23-step verification including defenses against Zsh equals expansion, unicode zero-width space injection, and IFS null-byte attacks), well-designed tool safety. This isn&apos;t a sloppy company. It&apos;s a company moving fast enough that the build pipeline couldn&apos;t keep up with the ambition.&lt;/p&gt;
+&lt;p&gt;But the strategic damage is real. Code can be refactored. A product roadmap that every competitor has already read cannot be un-leaked.&lt;/p&gt;
+&lt;p&gt;Check your &lt;code&gt;.npmignore&lt;/code&gt;. That&apos;s the whole lesson.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Stay curious, ship carefully. 🔍&lt;/p&gt;
+&lt;/blockquote&gt;
+</content:encoded><author>rgjny</author></item></channel></rss>

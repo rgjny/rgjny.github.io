@@ -1,0 +1,73 @@
+---
+import { Image } from 'astro:assets'
+import GitHubActivityCalendar from '~/components/GitHubActivityCalendar.astro'
+import type { FrontmatterImage } from '~/types'
+
+interface Props {
+  avatarImage?: FrontmatterImage
+  githubCalendar?: string
+}
+const { avatarImage, githubCalendar } = Astro.props
+
+const focus = [
+  { no: '01', name: 'Web & APIs',   desc: 'Broken access control, IDOR, SSRF, injection.' },
+  { no: '02', name: 'Auth & Logic', desc: 'Privilege escalation, session and flow abuse.' },
+  { no: '03', name: 'Mobile',       desc: 'Android and iOS clients, the traffic behind them.' },
+  { no: '04', name: 'Cloud',        desc: 'Misconfig, metadata, and trust between services.' },
+]
+---
+
+<section class="hero">
+  <div class="hero-eyebrow">
+    <span class="he-tick"></span>
+    <span class="he-text">Security research · est. 2025</span>
+  </div>
+
+  <div class="plate">
+    <div class="plate-main">
+      <h1 class="hero-name">rgjny<span class="dot">.</span><span class="term-caret" aria-hidden="true">_</span></h1>
+      <div class="hero-rule" aria-hidden="true"></div>
+      <p class="hero-role">
+        Bug-bounty hunter chasing the <em>gap</em> between how a system should work and what it really does.
+      </p>
+    </div>
+
+    {avatarImage && (
+      <div class="hero-portrait">
+        <div class="portrait-frame">
+          <Image
+            priority
+            src={avatarImage.src}
+            alt={avatarImage.alt}
+            class="portrait-img"
+            widths={[304]}
+            height={152}
+            width={152}
+          />
+        </div>
+      </div>
+    )}
+  </div>
+
+  <div class="hero-foot">
+    <div class="hero-status">
+      <span class="status-dot"></span>
+      <span>Currently hunting</span>
+    </div>
+    <div class="hero-intro prose"><slot /></div>
+  </div>
+
+  <div class="focus">
+    <div class="focus-grid">
+      {focus.map((f) => (
+        <div class="focus-item">
+          <span class="fx-no">{f.no}</span>
+          <span class="fx-name">{f.name}</span>
+          <span class="fx-desc">{f.desc}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  {githubCalendar && <GitHubActivityCalendar username={githubCalendar} />}
+</section>

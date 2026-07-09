@@ -1,0 +1,17 @@
+---
+import siteConfig from '~/site.config'
+import SocialLinks from '~/components/SocialLinks.astro'
+---
+
+<footer class="site-footer mt-auto pt-10 md:pt-12 grow-0 flex flex-col gap-5 items-center max-w-full">
+  {siteConfig.socialLinks && <SocialLinks socialLinks={siteConfig.socialLinks} />}
+  <div class="footer-bottom">
+    <span class="footer-copy">
+      <span class="footer-symbol">©</span>
+      {new Date().getFullYear()}
+      <span class="footer-author">{siteConfig.author}</span>
+    </span>
+    <span class="footer-sep">·</span>
+    <span class="footer-tagline">bug bounty & security research</span>
+  </div>
+</footer>

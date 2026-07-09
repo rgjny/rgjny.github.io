@@ -1,0 +1,59 @@
+---
+---
+<div id="lb-overlay" onclick="this.classList.remove('active')">
+  <span id="lb-close">✕</span>
+  <img id="lb-img" src="" alt="" onclick="event.stopPropagation()" />
+</div>
+
+<style>
+  #lb-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    z-index: 9999;
+    cursor: zoom-out;
+    align-items: center;
+    justify-content: center;
+  }
+  #lb-overlay.active { display: flex; }
+  #lb-close {
+    position: fixed;
+    top: 1.2rem;
+    right: 1.5rem;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.7;
+  }
+  #lb-img {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 6px;
+    box-shadow: 0 0 60px rgba(0,0,0,0.9);
+    animation: pop 0.15s ease;
+    cursor: default;
+  }
+  @keyframes pop {
+    from { transform: scale(0.9); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+</style>
+
+<script>
+  const overlay = document.getElementById('lb-overlay');
+  const lbImg = document.getElementById('lb-img');
+
+  document.querySelectorAll('.prose img').forEach(img => {
+    img.style.cursor = 'zoom-in';
+    img.addEventListener('click', () => {
+      lbImg.src = img.src;
+      lbImg.alt = img.alt;
+      overlay.classList.add('active');
+    });
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') overlay.classList.remove('active');
+  });
+</script>

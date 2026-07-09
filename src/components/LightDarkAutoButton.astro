@@ -1,0 +1,85 @@
+<script>
+  const lightThemeId = 'light'
+  const darkThemeId = 'dark'
+
+  const getSystemTheme = () =>
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? darkThemeId
+      : lightThemeId
+
+  const applyTheme = (theme) => {
+    if (theme === 'auto') {
+      document.documentElement.setAttribute('data-theme', getSystemTheme())
+    } else {
+      document.documentElement.setAttribute('data-theme', theme)
+    }
+  }
+
+  const runTransition = (event, theme) => {
+    const x = event?.clientX ?? window.innerWidth / 2
+    const y = event?.clientY ?? window.innerHeight / 2
+
+    document.documentElement.style.setProperty('--vt-x', `${x}px`)
+    document.documentElement.style.setProperty('--vt-y', `${y}px`)
+
+    if (!document.startViewTransition) {
+      applyTheme(theme)
+      return
+    }
+
+    document.documentElement.classList.add('theme-switching')
+
+    const transition = document.startViewTransition(() => {
+      return new Promise((resolve) => {
+        requestAnimationFrame(() => {
+          applyTheme(theme)
+          resolve()
+        })
+      })
+    })
+
+    transition.finished.finally(() => {
+      document.documentElement.classList.remove('theme-switching')
+    })
+  }
+
+  const updateIcons = (theme) => {
+    const sun = document.querySelector('[data-icon="sun"]')
+    const moon = document.querySelector('[data-icon="moon"]')
+    const auto = document.querySelector('[data-icon="auto"]')
+
+    if (!sun || !moon || !auto) return
+
+    sun.style.display = theme === 'light' ? 'block' : 'none'
+    moon.style.display = theme === 'dark' ? 'block' : 'none'
+    auto.style.display = theme === 'auto' ? 'block' : 'none'
+  }
+
+  const getNextTheme = (current) => {
+    if (current === 'light') return 'dark'
+    if (current === 'dark') return 'auto'
+    return 'light'
+  }
+
+  const initTheme = () => {
+    const saved = localStorage.getItem('data-theme') || 'auto'
+    applyTheme(saved)
+    updateIcons(saved)
+  }
+
+  /*  CHANGE */
+  window.addEventListener('load', () => {
+    initTheme()
+
+    const btn = document.querySelector('.theme-toggle')
+
+    btn?.addEventListener('click', (e) => {
+      const current = localStorage.getItem('data-theme') || 'auto'
+      const next = getNextTheme(current)
+
+      localStorage.setItem('data-theme', next)
+      updateIcons(next)
+      runTransition(e, next)
+    })
+  })
+</script>

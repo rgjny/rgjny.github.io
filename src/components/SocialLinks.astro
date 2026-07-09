@@ -1,0 +1,61 @@
+---
+import type { SocialLinks } from '~/types'
+import IconGithub from '~/icons/github.svg'
+import IconMastodon from '~/icons/mastodon.svg'
+import IconTwitter from '~/icons/twitter.svg'
+import IconLinkedin from '~/icons/linkedin.svg'
+import IconBluesky from '~/icons/bluesky.svg'
+import IconEmail from '~/icons/email.svg'
+import IconRss from '~/icons/rss.svg'
+
+interface Props {
+  socialLinks: SocialLinks
+}
+
+const { socialLinks } = Astro.props
+---
+
+<div class="social-links">
+  {socialLinks.github && (
+    <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" class="social-link" title="GitHub">
+      <span class="sr-only">GitHub</span>
+      <IconGithub class="size-5" />
+    </a>
+  )}
+  {socialLinks.mastodon && (
+    <a href={socialLinks.mastodon} target="_blank" rel="noopener noreferrer" class="social-link" title="Mastodon">
+      <span class="sr-only">Mastodon</span>
+      <IconMastodon class="size-5" />
+    </a>
+  )}
+  {socialLinks.twitter && (
+    <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" class="social-link" title="X / Twitter">
+      <span class="sr-only">Twitter</span>
+      <IconTwitter class="size-5" />
+    </a>
+  )}
+  {socialLinks.linkedin && (
+    <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" class="social-link" title="LinkedIn">
+      <span class="sr-only">LinkedIn</span>
+      <IconLinkedin class="size-5" />
+    </a>
+  )}
+  {socialLinks.bluesky && (
+    <a href={socialLinks.bluesky} target="_blank" rel="noopener noreferrer" class="social-link" title="Bluesky">
+      <span class="sr-only">Bluesky</span>
+      <IconBluesky class="size-5" />
+    </a>
+  )}
+  {socialLinks.email && (
+    <a href={`mailto:${socialLinks.email}`} class="social-link" title="Email">
+      <span class="sr-only">Email</span>
+      <IconEmail class="size-5" />
+    </a>
+  )}
+  {socialLinks.rss && (
+    <a href="/rss.xml" class="social-link" title="RSS">
+      <span class="sr-only">RSS</span>
+      <IconRss class="size-5" />
+    </a>
+  )}
+</div>

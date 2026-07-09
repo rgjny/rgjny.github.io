@@ -1,0 +1,130 @@
+---
+import siteConfig from '~/site.config'
+import Search from '~/components/Search.astro'
+import NavLink from '~/components/NavLink.astro'
+
+const currentPath = Astro.url.pathname
+---
+
+<header class="mb-8 site-header">
+  <div class="relative flex items-center justify-between pb-4 header-inner">
+    <!-- Logo -->
+    <a id="logo" href="/" class="logo-link no-underline">
+      <span class="logo-mark">rgjny<span class="logo-dot">.</span></span><span class="logo-caret" aria-hidden="true">_</span>
+      <span class="logo-sub">field notes</span>
+    </a>
+
+    <!-- Right controls -->
+    <div class="flex items-center gap-1.5 sm:gap-2">
+      <Search trailingSlashes={siteConfig.trailingSlashes} />
+
+      <!-- Dark / Light toggle -->
+      <button
+        id="theme-toggle-btn"
+        class="theme-toggle"
+        aria-label="Toggle theme"
+        title="Toggle dark / light mode"
+      >
+        <!-- Crescent — shown in light mode (click → dark) -->
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M20.5 14.2A8.3 8.3 0 1 1 9.8 3.5a6.6 6.6 0 0 0 10.7 10.7Z"
+            fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <circle cx="15.5" cy="7" r="0.9" fill="currentColor"/>
+          <circle cx="18.5" cy="10.5" r="0.55" fill="currentColor"/>
+        </svg>
+        <!-- Sun — shown in dark mode (click → light) -->
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.2" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1.6"/>
+          <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <path d="M12 2.6v2.4M12 19v2.4M2.6 12h2.4M19 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M18.7 5.3 17 7M7 17l-1.7 1.7"/>
+          </g>
+        </svg>
+      </button>
+
+      <!-- Mobile menu -->
+      <nav id="nav-mobile" aria-label="Menu" class="p-0 sm:hidden">
+        <button
+          id="nav-mobile-button"
+          class="mobile-menu-btn px-3 py-1 h-full cursor-pointer rounded-lg transition-all"
+          type="button" aria-expanded="false" aria-controls="nav-menu-list"
+        >
+          <span class="menu-icon">▾</span>
+        </button>
+        <ul
+          id="nav-mobile-list"
+          class="invisible absolute flex flex-col shadow-2xl m-0 p-2.5 top-12 right-0 z-50 rounded-xl mobile-dropdown"
+        >
+          {siteConfig.navLinks.map((link) => (
+            <li class="p-2" aria-expanded="false">
+              <NavLink link={link} />
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Desktop nav -->
+  <nav aria-label="Menu" class="p-0 mt-4 ml-0.5 hidden sm:block">
+    <ul class="flex flex-row gap-1">
+      {siteConfig.navLinks.map((link) => {
+        const isActive = currentPath === link.url || (link.url !== '/' && currentPath.startsWith(link.url))
+        return (
+          <li aria-expanded="true">
+            <a
+              href={link.url}
+              class:list={['nav-item', isActive && 'nav-active']}
+              target={link.external ? '_blank' : undefined}
+              rel={link.external ? 'noopener noreferrer' : undefined}
+            >
+              {link.name}
+              {link.external && <span class="ext-icon">↗</span>}
+            </a>
+          </li>
+        )
+      })}
+    </ul>
+  </nav>
+</header>
+
+<script>
+  function applyTheme(theme: string) {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('theme', theme)
+  }
+
+  // (Re)bind header controls — runs on first load and after every
+  // client-side navigation, since ClientRouter swaps in fresh DOM.
+  function initHeader() {
+    const html = document.documentElement
+    const btn = document.getElementById('theme-toggle-btn')
+
+    btn?.addEventListener('click', () => {
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      if (!(document as any).startViewTransition || reduce) {
+        applyTheme(next)
+        return
+      }
+      ;(document as any).startViewTransition(() => applyTheme(next))
+    })
+
+    const navMobileButton = document.getElementById('nav-mobile-button')
+    const navMobileList = document.getElementById('nav-mobile-list')
+    const navMobileListItems = navMobileList?.querySelectorAll('li')
+
+    const toggle = (action: 'on' | 'off' | 'toggle') => {
+      let open: boolean
+      if (action === 'toggle') open = !navMobileList?.classList.toggle('invisible')
+      else {
+        open = action === 'on'
+        navMobileList?.classList.toggle('invisible', !open)
+      }
+      navMobileButton?.setAttribute('aria-expanded', open ? 'true' : 'false')
+      navMobileListItems?.forEach((li) => li.setAttribute('aria-expanded', open ? 'true' : 'false'))
+    }
+    navMobileButton?.addEventListener('click', () => toggle('toggle'))
+  }
+
+  document.addEventListener('astro:page-load', initHeader)
+</script>
