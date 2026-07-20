@@ -34,29 +34,32 @@ const postsHaveSeries = sortedPosts.some((post) => post.data.series)
     </HomeBanner>
   )}
   {postsHaveSeries && (
-    <section>
+    <section class="home-collections">
       <BlockHeader>Collections</BlockHeader>
       <SeriesSection posts={sortedPosts} />
     </section>
   )}
   {postsHaveTags && (
-    <section>
+    <section class="home-index">
       <BlockHeader>Index</BlockHeader>
       <TagsSection posts={sortedPosts} />
     </section>
   )}
   {sortedPosts.length > 0 && (
-    <section>
-      <BlockHeader>Field notes</BlockHeader>
+    <section class="home-writing">
+      <BlockHeader>Latest writing</BlockHeader>
       {sortedPosts
         .reverse()
         .slice(0, Math.floor(siteConfig.pageSize / 2))
-        .map((post) => (
-          <div class="reveal">
-            <PostPreview post={post} />
+        .map((post, index) => (
+          <div
+            class:list={['writing-card scroll-reveal', index === 0 ? 'writing-card--lead' : 'writing-card--side']}
+            style={`--reveal-delay: ${index * 90}ms`}
+          >
+            <PostPreview post={post} featured />
           </div>
         ))}
-      <Pagination nextLink="/posts" nextText="All field notes →" />
+      <Pagination nextLink="/posts" nextText="All posts →" />
     </section>
   )}
 </Layout>

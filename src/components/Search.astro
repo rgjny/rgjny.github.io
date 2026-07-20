@@ -8,12 +8,12 @@ const { trailingSlashes = false } = Astro.props
 
 <site-search class="ms-auto" id="search" data-trailing-slashes={trailingSlashes}>
   <button
-    class="hover:text-accent flex cursor-pointer items-center justify-center rounded-md"
+    class="header-icon-button"
     aria-keyshortcuts="Control+K Meta+K"
     data-open-modal
     disabled
   >
-    <IconSearch class="size-6 text-accent" />
+    <IconSearch class="size-5" />
     <span class="sr-only">Open Search</span>
   </button>
   <dialog

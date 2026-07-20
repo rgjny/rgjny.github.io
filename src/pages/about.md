@@ -3,11 +3,11 @@ layout: '~/layouts/MarkdownLayout.astro'
 title: About Me
 ---
 
-Hi — I'm Harshit, but online I go by **rgjny**.
+Hi - I'm Harshit, but online I go by **rgjny**.
 
-I'm a security researcher and bug-bounty hunter. What pulls me in is the gap between how something is *supposed* to work and what it actually does — broken access control, SSRF, auth and privilege-escalation, logic flaws. Web, APIs, mobile, cloud: wherever that gap shows up, that's where I end up.
+I'm a security researcher and bug-bounty hunter. What pulls me in is the gap between how something is *supposed* to work and what it actually does - broken access control, SSRF, auth and privilege-escalation, logic flaws. Web, APIs, mobile, cloud: wherever that gap shows up, that's where I end up.
 
-Between hunts I build small tools to make the next one faster — recon, automation, whatever saves me from doing the boring part twice.
+Between hunts I build small tools to make the next one faster - recon, automation, whatever saves me from doing the boring part twice.
 
 This is where I write up findings: the wrong turns, the *"huh, that shouldn't work"* moments, and the chains that finally clicked. If one of these saves you an afternoon, good.
 

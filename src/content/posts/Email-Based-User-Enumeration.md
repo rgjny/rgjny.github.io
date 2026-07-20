@@ -6,7 +6,7 @@ tags: ['bug bounty', 'information disclosure']
 toc: true
 coverImage:
   src: 'banner1.gif'
-  alt: 'banner'
+  alt: 'Animated scene of a security researcher working at a laptop'
 ---
 
 This Blog is related to privacy-related vulnerability that I reported to a **private bug bounty program**.
@@ -93,7 +93,7 @@ Content-Type: application/json
   "username": "target_user@example.com"
 }
 ```
-3. — The API responds with user metadata,
+3. - The API responds with user metadata,
  including: 
  - Internal user Info  
  - Account creation timestamps 
@@ -116,8 +116,8 @@ While not containing direct PII like full billing addresses, the exposed metadat
 
 ## Timeline
 
-- ⮞**September 5, 2025** — Report submitted with proposed Critical severity
-- ⮞**~20 minutes later** — Passed initial analyst review
+- ⮞**September 5, 2025** - Report submitted with proposed Critical severity
+- ⮞**~20 minutes later** - Passed initial analyst review
 Same day 
 - ⮞Briefly marked as **Duplicate** (of a report targeting a different endpoint using user ID)
 Quick appeal 

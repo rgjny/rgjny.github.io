@@ -6,16 +6,37 @@ import NavLink from '~/components/NavLink.astro'
 const currentPath = Astro.url.pathname
 ---
 
-<header class="mb-8 site-header">
-  <div class="relative flex items-center justify-between pb-4 header-inner">
+<header class="site-header">
+  <div class="header-inner">
     <!-- Logo -->
     <a id="logo" href="/" class="logo-link no-underline">
       <span class="logo-mark">rgjny<span class="logo-dot">.</span></span><span class="logo-caret" aria-hidden="true">_</span>
-      <span class="logo-sub">field notes</span>
+      <span class="logo-sub">security journal</span>
     </a>
 
-    <!-- Right controls -->
-    <div class="flex items-center gap-1.5 sm:gap-2">
+    <nav aria-label="Primary navigation" class="desktop-nav">
+      <ul>
+        {siteConfig.navLinks.map((link) => {
+          const isActive = currentPath === link.url || (link.url !== '/' && currentPath.startsWith(link.url))
+          return (
+            <li>
+              <a
+                href={link.url}
+                class:list={['nav-item', isActive && 'nav-active']}
+                target={link.external ? '_blank' : undefined}
+                rel={link.external ? 'noopener noreferrer' : undefined}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {link.name}
+                {link.external && <span class="ext-icon" aria-hidden="true">↗</span>}
+              </a>
+            </li>
+          )
+        })}
+      </ul>
+    </nav>
+
+    <div class="header-controls">
       <Search trailingSlashes={siteConfig.trailingSlashes} />
 
       <!-- Dark / Light toggle -->
@@ -25,14 +46,14 @@ const currentPath = Astro.url.pathname
         aria-label="Toggle theme"
         title="Toggle dark / light mode"
       >
-        <!-- Crescent — shown in light mode (click → dark) -->
+        <!-- Crescent - shown in light mode (click → dark) -->
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M20.5 14.2A8.3 8.3 0 1 1 9.8 3.5a6.6 6.6 0 0 0 10.7 10.7Z"
             fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
           <circle cx="15.5" cy="7" r="0.9" fill="currentColor"/>
           <circle cx="18.5" cy="10.5" r="0.55" fill="currentColor"/>
         </svg>
-        <!-- Sun — shown in dark mode (click → light) -->
+        <!-- Sun - shown in dark mode (click → light) -->
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <circle cx="12" cy="12" r="4.2" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1.6"/>
           <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
@@ -42,17 +63,17 @@ const currentPath = Astro.url.pathname
       </button>
 
       <!-- Mobile menu -->
-      <nav id="nav-mobile" aria-label="Menu" class="p-0 sm:hidden">
+      <nav id="nav-mobile" aria-label="Mobile navigation" class="mobile-nav">
         <button
           id="nav-mobile-button"
-          class="mobile-menu-btn px-3 py-1 h-full cursor-pointer rounded-lg transition-all"
+          class="mobile-menu-btn"
           type="button" aria-expanded="false" aria-controls="nav-menu-list"
         >
-          <span class="menu-icon">▾</span>
+          <span>Menu</span>
         </button>
         <ul
           id="nav-mobile-list"
-          class="invisible absolute flex flex-col shadow-2xl m-0 p-2.5 top-12 right-0 z-50 rounded-xl mobile-dropdown"
+          class="invisible mobile-dropdown"
         >
           {siteConfig.navLinks.map((link) => (
             <li class="p-2" aria-expanded="false">
@@ -64,38 +85,22 @@ const currentPath = Astro.url.pathname
     </div>
   </div>
 
-  <!-- Desktop nav -->
-  <nav aria-label="Menu" class="p-0 mt-4 ml-0.5 hidden sm:block">
-    <ul class="flex flex-row gap-1">
-      {siteConfig.navLinks.map((link) => {
-        const isActive = currentPath === link.url || (link.url !== '/' && currentPath.startsWith(link.url))
-        return (
-          <li aria-expanded="true">
-            <a
-              href={link.url}
-              class:list={['nav-item', isActive && 'nav-active']}
-              target={link.external ? '_blank' : undefined}
-              rel={link.external ? 'noopener noreferrer' : undefined}
-            >
-              {link.name}
-              {link.external && <span class="ext-icon">↗</span>}
-            </a>
-          </li>
-        )
-      })}
-    </ul>
-  </nav>
 </header>
 
 <script>
+  const headerWindow = window as Window & { headerController?: AbortController }
+
   function applyTheme(theme: string) {
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('theme', theme)
   }
 
-  // (Re)bind header controls — runs on first load and after every
+  // (Re)bind header controls - runs on first load and after every
   // client-side navigation, since ClientRouter swaps in fresh DOM.
   function initHeader() {
+    headerWindow.headerController?.abort()
+    headerWindow.headerController = new AbortController()
+    const { signal } = headerWindow.headerController
     const html = document.documentElement
     const btn = document.getElementById('theme-toggle-btn')
 
@@ -106,8 +111,10 @@ const currentPath = Astro.url.pathname
         applyTheme(next)
         return
       }
-      ;(document as any).startViewTransition(() => applyTheme(next))
-    })
+      html.classList.add('theme-switching')
+      const transition = (document as any).startViewTransition(() => applyTheme(next))
+      transition.finished.finally(() => html.classList.remove('theme-switching'))
+    }, { signal })
 
     const navMobileButton = document.getElementById('nav-mobile-button')
     const navMobileList = document.getElementById('nav-mobile-list')
@@ -123,8 +130,17 @@ const currentPath = Astro.url.pathname
       navMobileButton?.setAttribute('aria-expanded', open ? 'true' : 'false')
       navMobileListItems?.forEach((li) => li.setAttribute('aria-expanded', open ? 'true' : 'false'))
     }
-    navMobileButton?.addEventListener('click', () => toggle('toggle'))
+    navMobileButton?.addEventListener('click', () => toggle('toggle'), { signal })
+
+    document.addEventListener('click', (event) => {
+      if (!document.getElementById('nav-mobile')?.contains(event.target as Node)) toggle('off')
+    }, { signal })
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') toggle('off')
+    }, { signal })
   }
 
   document.addEventListener('astro:page-load', initHeader)
+  document.addEventListener('astro:before-swap', () => headerWindow.headerController?.abort())
 </script>

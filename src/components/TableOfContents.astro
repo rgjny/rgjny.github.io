@@ -27,24 +27,34 @@ const filteredHeadings = headings.filter(({ depth }) => depth >= 2 && depth <= 3
 </details>
 
 <script>
-  const anchors = document.querySelectorAll('h2[id], h3[id]')
-  const links = document.querySelectorAll('details.toc > nav > ul > li')
-  if (anchors.length === links.length && anchors.length > 0) {
-    window.addEventListener('scroll', (_event) => {
-      let scrollTop = window.scrollY
-      let highlighted = false
-      // then iterate backwards, on the first match highlight it and break
-      for (var i = anchors.length - 1; i >= 0; i--) {
-        const anchor = anchors[i] as HTMLElement
-        if (!highlighted && scrollTop > anchor.offsetTop - 75) {
-          links[i].classList.add('active-heading')
-          highlighted = true
-        } else {
-          links[i].classList.remove('active-heading')
-        }
-      }
-    })
+  const tocWindow = window as Window & { tocObserver?: IntersectionObserver }
+
+  function initTableOfContents() {
+    tocWindow.tocObserver?.disconnect()
+
+    const anchors = [...document.querySelectorAll<HTMLElement>('h2[id], h3[id]')]
+    const links = [...document.querySelectorAll<HTMLElement>('details.toc > nav > ul > li')]
+    if (anchors.length !== links.length || anchors.length === 0) return
+
+    const setActive = (index: number) => {
+      links.forEach((link, linkIndex) => link.classList.toggle('active-heading', linkIndex === index))
+    }
+
+    tocWindow.tocObserver = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
+        if (visible) setActive(anchors.indexOf(visible.target as HTMLElement))
+      },
+      { rootMargin: '-12% 0px -72% 0px', threshold: 0 },
+    )
+
+    anchors.forEach((anchor) => tocWindow.tocObserver?.observe(anchor))
   }
+
+  document.addEventListener('astro:page-load', initTableOfContents)
+  document.addEventListener('astro:before-swap', () => tocWindow.tocObserver?.disconnect())
 </script>
 
 <style>
