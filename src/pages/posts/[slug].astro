@@ -7,14 +7,13 @@ import DividerText from '~/components/DividerText.astro'
 import { getCollection, render, type CollectionEntry } from 'astro:content'
 import PostAddendum from '~/components/PostAddendum.astro'
 import TableOfContents from '~/components/TableOfContents.astro'
-import { Image } from 'astro:assets'
 import GiscusLoader from '~/components/GiscusLoader.astro'
 import siteConfig from '~/site.config'
 import Tags from '~/components/Tags.astro'
-import PostInfo from '~/components/PostInfo.astro'
 import ScrollUpButton from '~/components/ScrollUpButton.astro'
 import type { Collation } from '~/types'
 import ChevronsRight from '~/icons/chevrons-right.svg'
+import PostBanner from '~/components/PostBanner.astro'
 import { getPostSequenceContext } from '~/utils'
 
 export const getStaticPaths = (async () => {
@@ -31,7 +30,7 @@ export const getStaticPaths = (async () => {
 
 const { post, prev, next } = Astro.props
 const postData = post.data
-const { headings, Content: PostContent } = await render(post)
+const { headings, Content: PostContent, remarkPluginFrontmatter } = await render(post)
 const addendum = await getCollection('addendum')
 let AddendumContent
 let addendumAvatarImage
@@ -64,6 +63,12 @@ if (postData.tags && postData.tags.length > 0) {
   const tagsGroup = await TagsGroup.build(sortedPosts)
   tags = tagsGroup.matchMany(postData.tags)
 }
+
+// Post number = position in chronological order (oldest = 001).
+const postNo = sortedPosts.findIndex((p) => p.id === post.id) + 1
+const publishedStr = postData.published
+  ? postData.published.toISOString().split('T')[0].replace(/-/g, '.')
+  : ''
 ---
 
 <Layout
@@ -72,32 +77,25 @@ if (postData.tags && postData.tags.length > 0) {
   author={postData.author}
   tags={postData.tags}
 >
-  <article class="max-w-full py-7.5" data-pagefind-body>
-    {
-      postData.coverImage && (
-        <Image
-          priority
-          layout="constrained"
-          src={postData.coverImage.src}
-          alt={postData.coverImage.alt}
-          class="w-full rounded-xl mb-5"
-        />
-      )
-    }
+  <article class="max-w-full py-2" data-pagefind-body>
+    <PostBanner
+      seed={post.id}
+      no={postNo}
+      date={publishedStr}
+      minutes={remarkPluginFrontmatter.minutes}
+      words={remarkPluginFrontmatter.wordsCount}
+      cover={postData.coverImage?.src}
+      coverAlt={postData.coverImage?.alt}
+    />
     <div class="md:mx-2">
-      <h1 id={post.id} class="mb-4 text-[1.75rem] text-heading1 font-semibold">
-        # {postData.title}
+      <h1 id={post.id} class="mb-4 text-[1.9rem] text-heading1 font-semibold">
+        {postData.title}
       </h1>
-      <div class="my-2 border-l-2 border-accent/80 pl-4 py-2">
-        <PostInfo post={post} class="mb-1" />
-        {
-          tags && (
-            <div class="mt-4">
-              <Tags tags={tags} />
-            </div>
-          )
-        }
-      </div>
+      {tags && (
+        <div class="mb-2">
+          <Tags tags={tags} />
+        </div>
+      )}
     </div>
     <!-- <hr class="border-accent/10 border-2 rounded-xl hidden lg:block" /> -->
     <div class="flex flex-col xl:gap-1 2xl:gap-18 xl:flex-row xl:items-start">

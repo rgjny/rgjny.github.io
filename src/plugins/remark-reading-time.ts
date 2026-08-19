@@ -10,6 +10,9 @@ const remarkReadingTime: RemarkPlugin = (_options?) => {
       // readingTime.text will give us minutes read as a friendly string,
       // i.e. "3 min read"
       data.astro.frontmatter.minutesRead = readingTime.text
+      // Expose raw minutes + word count for the post banner meta row.
+      data.astro.frontmatter.minutes = Math.max(1, Math.round(readingTime.minutes))
+      data.astro.frontmatter.wordsCount = readingTime.words
     }
   }
 }

@@ -1,0 +1,59 @@
+---
+import siteConfig from '~/site.config'
+import Icon from '~/components/Icon.astro'
+
+const path = Astro.url.pathname
+const isHome = path === '/'
+const isPosts = path.startsWith('/posts')
+const isAbout = path.startsWith('/about')
+---
+
+<div class="dock-wrap">
+  <nav class="dock" aria-label="Quick dock">
+    <a href="/" class:list={['dock-btn', isHome && 'is-active']} title="Home" aria-label="Home">
+      <Icon name="home" />
+    </a>
+    <a href="/posts" class:list={['dock-btn', isPosts && 'is-active']} title="Posts" aria-label="Posts">
+      <Icon name="pen" />
+    </a>
+    <a href="/about" class:list={['dock-btn', isAbout && 'is-active']} title="About" aria-label="About">
+      <Icon name="face" />
+    </a>
+    <span class="dock-sep" aria-hidden="true"></span>
+    {siteConfig.socialLinks?.github && (
+      <a href={siteConfig.socialLinks.github} target="_blank" rel="noopener noreferrer" class="dock-btn" title="GitHub" aria-label="GitHub">
+        <Icon name="github" />
+      </a>
+    )}
+    {siteConfig.socialLinks?.email && (
+      <a href={`mailto:${siteConfig.socialLinks.email}`} class="dock-btn" title="Email" aria-label="Email">
+        <Icon name="mail" />
+      </a>
+    )}
+    <span class="dock-sep" aria-hidden="true"></span>
+    <button id="dock-theme-btn" class="dock-btn" type="button" title="Toggle theme" aria-label="Toggle theme">
+      <Icon name="sun" />
+    </button>
+  </nav>
+</div>
+
+<script>
+  // Reuse the header's theme logic; the dock button is a second trigger.
+  function initDock() {
+    const btn = document.getElementById('dock-theme-btn')
+    const html = document.documentElement
+    btn?.addEventListener('click', () => {
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const apply = () => {
+        html.setAttribute('data-theme', next)
+        localStorage.setItem('theme', next)
+      }
+      if (!(document as any).startViewTransition || reduce) return apply()
+      html.classList.add('theme-switching')
+      const t = (document as any).startViewTransition(apply)
+      t.finished.finally(() => html.classList.remove('theme-switching'))
+    })
+  }
+  document.addEventListener('astro:page-load', initDock)
+</script>

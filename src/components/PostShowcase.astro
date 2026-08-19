@@ -1,0 +1,32 @@
+---
+import GenArt from '~/components/GenArt.astro'
+import { render, type CollectionEntry } from 'astro:content'
+import { dateString } from '~/utils'
+
+interface Props {
+  post: CollectionEntry<'posts'>
+  index: number
+}
+const { post, index } = Astro.props
+const { remarkPluginFrontmatter } = await render(post)
+const description = remarkPluginFrontmatter.description || post.data.description
+const minutes = remarkPluginFrontmatter.minutes
+const variant = index % 2 === 0 ? 'halftone' : 'graph'
+const href = `/posts/${post.id}`
+---
+
+<a class="showcase-item" href={href} aria-label={`Read ${post.data.title}`}>
+  <div class="showcase-art">
+    <GenArt seed={post.id} variant={variant} ratio={1.35} />
+  </div>
+  <div class="showcase-body">
+    <h3 class="showcase-title">{post.data.title}</h3>
+    {description && <p class="showcase-desc">{description}</p>}
+    <div class="showcase-meta mono">
+      <time>{dateString(post.data.published)}</time>
+      {minutes != null && <span class="showcase-dot">·</span>}
+      {minutes != null && <span>{minutes} min</span>}
+      <span class="showcase-arrow" aria-hidden="true">→</span>
+    </div>
+  </div>
+</a>

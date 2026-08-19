@@ -2,11 +2,9 @@
 import Layout from '~/layouts/Layout.astro'
 import { getSortedPosts } from '~/utils'
 import { getCollection, render } from 'astro:content'
-import PostPreview from '~/components/PostPreview.astro'
-import Pagination from '~/components/Pagination.astro'
+import PostList from '~/components/PostList.astro'
 import BlockHeader from '~/components/BlockHeader.astro'
 import HomeBanner from '~/components/HomeBanner.astro'
-import siteConfig from '~/site.config'
 import TagsSection from '~/components/TagsSection.astro'
 import SeriesSection from '~/components/SeriesSection.astro'
 
@@ -25,6 +23,13 @@ if (home.length > 0) {
 const sortedPosts = await getSortedPosts()
 const postsHaveTags = sortedPosts.some((post) => post.data.tags && post.data.tags.length > 0)
 const postsHaveSeries = sortedPosts.some((post) => post.data.series)
+
+// Sequential section numbers for whichever sections actually render.
+let n = 0
+const pad = () => String(++n).padStart(2, '0')
+const writingNum = sortedPosts.length > 0 ? pad() : undefined
+const collectionsNum = postsHaveSeries ? pad() : undefined
+const indexNum = postsHaveTags ? pad() : undefined
 ---
 
 <Layout>
@@ -33,33 +38,29 @@ const postsHaveSeries = sortedPosts.some((post) => post.data.series)
       <HomeContent />
     </HomeBanner>
   )}
+  {sortedPosts.length > 0 && (
+    <section class="home-writing">
+      <div class="block-header-wrapper">
+        <div class="block-header-title">
+          <span class="block-header-num">{writingNum}</span>
+          <span class="block-header-label">Writing</span>
+          <span class="block-header-line"></span>
+          <a class="block-header-more" href="/posts">View all</a>
+        </div>
+      </div>
+      <PostList posts={sortedPosts.slice().reverse().slice(0, 5)} />
+    </section>
+  )}
   {postsHaveSeries && (
     <section class="home-collections">
-      <BlockHeader>Collections</BlockHeader>
+      <BlockHeader num={collectionsNum}>Collections</BlockHeader>
       <SeriesSection posts={sortedPosts} />
     </section>
   )}
   {postsHaveTags && (
     <section class="home-index">
-      <BlockHeader>Index</BlockHeader>
+      <BlockHeader num={indexNum}>Index</BlockHeader>
       <TagsSection posts={sortedPosts} />
-    </section>
-  )}
-  {sortedPosts.length > 0 && (
-    <section class="home-writing">
-      <BlockHeader>Latest writing</BlockHeader>
-      {sortedPosts
-        .reverse()
-        .slice(0, Math.floor(siteConfig.pageSize / 2))
-        .map((post, index) => (
-          <div
-            class:list={['writing-card scroll-reveal', index === 0 ? 'writing-card--lead' : 'writing-card--side']}
-            style={`--reveal-delay: ${index * 90}ms`}
-          >
-            <PostPreview post={post} featured />
-          </div>
-        ))}
-      <Pagination nextLink="/posts" nextText="All posts →" />
     </section>
   )}
 </Layout>

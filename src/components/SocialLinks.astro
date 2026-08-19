@@ -7,55 +7,128 @@ import IconLinkedin from '~/icons/linkedin.svg'
 import IconBluesky from '~/icons/bluesky.svg'
 import IconEmail from '~/icons/email.svg'
 import IconRss from '~/icons/rss.svg'
+import { getGitHubCard } from '~/lib/github'
 
 interface Props {
   socialLinks: SocialLinks
 }
 
 const { socialLinks } = Astro.props
+const twitterHandle = socialLinks.twitter?.replace(/\/$/, '').split('/').pop()
+
+// GitHub username + card data (contribution grid, totals) for the hover card.
+const githubUser = socialLinks.github?.replace(/\/$/, '').split('/').pop()
+const gh = githubUser ? await getGitHubCard(githubUser) : null
+const levelColor = (lvl: number) =>
+  lvl <= 0 ? 'var(--border-soft)' : `color-mix(in oklab, var(--accent) ${lvl * 25}%, var(--border-soft))`
 ---
 
 <div class="social-links">
   {socialLinks.github && (
-    <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" class="social-link" title="GitHub">
-      <span class="sr-only">GitHub</span>
-      <IconGithub class="size-5" />
-    </a>
+    <div class="social-item">
+      <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" class="social-link" title="GitHub">
+        <span class="sr-only">GitHub</span>
+        <IconGithub class="size-5" />
+      </a>
+      <!-- hover contribution card -->
+      <div class="social-pop social-pop--github" role="tooltip">
+        {gh && gh.weeks.length > 0 && (
+          <div class="gh-grid" aria-hidden="true">
+            {gh.weeks.map((week) => (
+              <div class="gh-col">
+                {Array.from({ length: 7 }, (_v, d) => (
+                  <span class="gh-cell" style={`background:${levelColor(week[d] ?? 0)}`} />
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+        <div class="gh-stats">
+          <span class="gh-nums">
+            {gh?.total != null && <span><strong>{gh.total.toLocaleString()}</strong> contributions</span>}
+            {gh?.total != null && gh?.followers != null && <span class="gh-sep">·</span>}
+            {gh?.followers != null && <span><strong>{gh.followers.toLocaleString()}</strong> followers</span>}
+            {gh?.total == null && gh?.followers == null && <span>@{githubUser}</span>}
+          </span>
+          <IconGithub class="gh-ico" />
+        </div>
+      </div>
+    </div>
   )}
   {socialLinks.mastodon && (
-    <a href={socialLinks.mastodon} target="_blank" rel="noopener noreferrer" class="social-link" title="Mastodon">
-      <span class="sr-only">Mastodon</span>
-      <IconMastodon class="size-5" />
-    </a>
+    <div class="social-item">
+      <a href={socialLinks.mastodon} target="_blank" rel="noopener noreferrer" class="social-link" title="Mastodon">
+        <span class="sr-only">Mastodon</span>
+        <IconMastodon class="size-5" />
+      </a>
+    </div>
   )}
   {socialLinks.twitter && (
-    <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" class="social-link" title="X / Twitter">
-      <span class="sr-only">Twitter</span>
-      <IconTwitter class="size-5" />
-    </a>
+    <div class="social-item">
+      <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" class="social-link" title="X / Twitter">
+        <span class="sr-only">Twitter</span>
+        <IconTwitter class="size-5" />
+      </a>
+      <!-- hover profile card -->
+      <div class="social-pop social-pop--profile" role="tooltip">
+        <div class="pop-head">
+          <span class="pop-avatar">r</span>
+          <span class="pop-id">
+            <span class="pop-name">rgjny</span>
+            <span class="pop-handle">@{twitterHandle}</span>
+          </span>
+          <IconTwitter class="pop-x" />
+        </div>
+        <p class="pop-bio">Bug-bounty hunter. Web, mobile &amp; cloud. I write up the bugs with a story behind them.</p>
+        <span class="pop-cta">View profile ↗</span>
+      </div>
+    </div>
   )}
   {socialLinks.linkedin && (
-    <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" class="social-link" title="LinkedIn">
-      <span class="sr-only">LinkedIn</span>
-      <IconLinkedin class="size-5" />
-    </a>
+    <div class="social-item">
+      <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" class="social-link" title="LinkedIn">
+        <span class="sr-only">LinkedIn</span>
+        <IconLinkedin class="size-5" />
+      </a>
+    </div>
   )}
   {socialLinks.bluesky && (
-    <a href={socialLinks.bluesky} target="_blank" rel="noopener noreferrer" class="social-link" title="Bluesky">
-      <span class="sr-only">Bluesky</span>
-      <IconBluesky class="size-5" />
-    </a>
+    <div class="social-item">
+      <a href={socialLinks.bluesky} target="_blank" rel="noopener noreferrer" class="social-link" title="Bluesky">
+        <span class="sr-only">Bluesky</span>
+        <IconBluesky class="size-5" />
+      </a>
+    </div>
   )}
   {socialLinks.email && (
-    <a href={`mailto:${socialLinks.email}`} class="social-link" title="Email">
-      <span class="sr-only">Email</span>
-      <IconEmail class="size-5" />
-    </a>
+    <div class="social-item">
+      <a href={`mailto:${socialLinks.email}`} class="social-link" title="Email">
+        <span class="sr-only">Email</span>
+        <IconEmail class="size-5" />
+      </a>
+      <!-- hover airmail envelope -->
+      <div class="social-pop social-pop--mail" role="tooltip">
+        <div class="mail-stripes" aria-hidden="true"></div>
+        <div class="mail-body">
+          <div class="mail-from">
+            <span class="mail-label">From</span>
+            <span>rgjny</span>
+          </div>
+          <div class="mail-stamp" aria-hidden="true"><span>✦</span></div>
+          <div class="mail-to">
+            <span class="mail-label">To</span>
+            <span class="mail-addr">{socialLinks.email}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   )}
   {socialLinks.rss && (
-    <a href="/rss.xml" class="social-link" title="RSS">
-      <span class="sr-only">RSS</span>
-      <IconRss class="size-5" />
-    </a>
+    <div class="social-item">
+      <a href="/rss.xml" class="social-link" title="RSS">
+        <span class="sr-only">RSS</span>
+        <IconRss class="size-5" />
+      </a>
+    </div>
   )}
 </div>

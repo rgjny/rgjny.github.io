@@ -11,18 +11,16 @@ const { headings } = Astro.props
 const filteredHeadings = headings.filter(({ depth }) => depth >= 2 && depth <= 3)
 ---
 
-<details
-  open
-  class="toc relative md:mx-2 xl:mx-0 text-foreground/90 text-sm bg-foreground/5 xl:bg-transparent px-8 xl:pr-0 py-6 mt-5 xl:mt-0 xl:w-full rounded-xl border-3 xl:border-none border-accent/10 xl:sticky xl:top-10 xl:basis-[274px] 2xl:basis-[320px] xl:order-2 xl:shrink-0 xl:opacity-90"
->
-  <summary
-    class="list-none marker:hidden marker:content-[''] before:content-['>'] before:text-accent before:font-semibold before:absolute before:left-3 cursor-pointer"
-    >Table of Contents</summary
-  >
-  <nav class="w-full text-sm xl:-ml-1">
-    <ul class="mt-4 flex flex-col max-w-full">
+<details open class="toc" id="toc">
+  <summary class="toc-summary">
+    <a class="toc-back" href="/posts">↩ Writing</a>
+    <span class="toc-caret" aria-hidden="true">On this page</span>
+  </summary>
+  <nav class="toc-nav" aria-label="Table of contents">
+    <ul class="toc-list">
       {filteredHeadings.map((heading) => <TOCHeading heading={heading} />)}
     </ul>
+    <button class="toc-top" type="button">↑ Top</button>
   </nav>
 </details>
 
@@ -33,7 +31,11 @@ const filteredHeadings = headings.filter(({ depth }) => depth >= 2 && depth <= 3
     tocWindow.tocObserver?.disconnect()
 
     const anchors = [...document.querySelectorAll<HTMLElement>('h2[id], h3[id]')]
-    const links = [...document.querySelectorAll<HTMLElement>('details.toc > nav > ul > li')]
+    const links = [...document.querySelectorAll<HTMLElement>('.toc-list > li')]
+
+    const topBtn = document.querySelector<HTMLButtonElement>('.toc-top')
+    topBtn?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }))
+
     if (anchors.length !== links.length || anchors.length === 0) return
 
     const setActive = (index: number) => {
@@ -56,9 +58,3 @@ const filteredHeadings = headings.filter(({ depth }) => depth >= 2 && depth <= 3
   document.addEventListener('astro:page-load', initTableOfContents)
   document.addEventListener('astro:before-swap', () => tocWindow.tocObserver?.disconnect())
 </script>
-
-<style>
-  details[open] summary:before {
-    transform: rotate(90deg);
-  }
-</style>

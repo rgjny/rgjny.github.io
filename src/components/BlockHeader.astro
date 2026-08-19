@@ -1,6 +1,15 @@
+---
+interface Props {
+  /** Two-digit section number shown in the mono eyebrow, e.g. "03". */
+  num?: string
+}
+const { num } = Astro.props
+---
+
 <div class="block-header-wrapper">
-  <h2 class="block-header-title">
+  <div class="block-header-title">
+    {num && <span class="block-header-num">{num}</span>}
     <span class="block-header-label"><slot /></span>
     <span class="block-header-line"></span>
-  </h2>
+  </div>
 </div>

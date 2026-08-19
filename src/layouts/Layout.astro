@@ -3,6 +3,7 @@ import '~/styles/global.css'
 import { ClientRouter } from 'astro:transitions'
 import Header from '~/components/Header.astro'
 import Footer from '~/components/Footer.astro'
+import Dock from '~/components/Dock.astro'
 import LightDarkAutoThemeLoader from '~/components/LightDarkAutoThemeLoader.astro'
 import SelectThemeLoader from '~/components/SelectThemeLoader.astro'
 import siteConfig from '~/site.config'
@@ -184,5 +185,6 @@ let generatedCss: string = cssLines.join('\n')
       </main>
       <Footer />
     </div>
+    <Dock />
   </body>
 </html>

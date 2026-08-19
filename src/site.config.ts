@@ -8,7 +8,7 @@ const config: SiteConfig = {
   tags: ['Bug Bounty', 'Cybersecurity'],
   socialCardAvatarImage: './src/content/avatar.jpg',
   // Browser typography is driven from global.css; this only feeds the social-card renderer.
-  font: 'DM Sans',
+  font: 'Inter',
   pageSize: 6,
   trailingSlashes: false,
   navLinks: [
@@ -26,14 +26,14 @@ const config: SiteConfig = {
       'github-dark': {
         // Base palette - our CSS vars override most of this at the :root level.
         // These are only used where the theme system injects variables directly.
-        'background':        '#211a15',
-        'editor.background': '#211a15',
-        'foreground':        '#efe3d0',
-        'editor.foreground': '#efe3d0',
-        'accent':            '#d4a15f',
-        'link':              '#d4a15f',
-        'border':            '#4a3a2f',
-        'muted-foreground':  '#a99887',
+        'background':        '#12100e',
+        'editor.background': '#12100e',
+        'foreground':        '#ece7df',
+        'editor.foreground': '#ece7df',
+        'accent':            '#e08a5a',
+        'link':              '#e08a5a',
+        'border':            '#2c2824',
+        'muted-foreground':  '#a49a8c',
       },
     },
   },

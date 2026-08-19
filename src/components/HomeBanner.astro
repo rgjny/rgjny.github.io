@@ -1,20 +1,20 @@
 ---
 import { Image } from 'astro:assets'
-import GitHubActivityCalendar from '~/components/GitHubActivityCalendar.astro'
+import Icon from '~/components/Icon.astro'
 import type { FrontmatterImage } from '~/types'
 
 interface Props {
   avatarImage?: FrontmatterImage
   githubCalendar?: string
 }
-const { avatarImage, githubCalendar } = Astro.props
+const { avatarImage } = Astro.props
 
-const focus = [
-  { mark: 'HTTP', name: 'Web & APIs', desc: 'Broken access control, IDOR, SSRF, and injection.' },
-  { mark: 'AUTH', name: 'Auth & Logic', desc: 'Privilege escalation, session flaws, and flow abuse.' },
-  { mark: 'APK', name: 'Mobile', desc: 'Android and iOS clients, plus the traffic behind them.' },
-  { mark: 'IAM', name: 'Cloud', desc: 'Misconfigurations, metadata, and trust between services.' },
-]
+// Quick links (Writing / About / GitHub) — animated icons, cali-style trio
+const trio = [
+  { icon: 'pen',    name: 'Writing', meta: 'notes & writeups', href: '/posts' },
+  { icon: 'face',   name: 'About',   meta: 'who I am',         href: '/about' },
+  { icon: 'github', name: 'GitHub',  meta: '@rgjny',           href: 'https://github.com/rgjny', external: true },
+] as const
 ---
 
 <section class="hero">
@@ -25,40 +25,59 @@ const focus = [
 
   <div class="plate">
     <div class="plate-main">
-      <h1 class="hero-name">rgjny<span class="dot">.</span><span class="term-caret" aria-hidden="true">_</span></h1>
-      <div class="hero-rule" aria-hidden="true"></div>
+      <h1 class="hero-name">rgjny<span class="dot">.</span></h1>
       <p class="hero-role">
-        Bug-bounty hunter chasing the <em>gap</em> between how a system should work and what it really does.
+        Bug-bounty hunter chasing the <span class="u-accent">gap</span> between how a system <em>should</em> work and what it really does.
       </p>
       <div class="hero-actions">
-        <a class="button button-primary" href="/posts">Read the journal</a>
-        <a class="button button-secondary" href="mailto:rgjnymail@proton.me">Send an email</a>
+        <a class="button button-primary" href="/posts">
+          Read the journal
+          <Icon name="arrow" />
+        </a>
+        <a class="button button-secondary" href="mailto:rgjnymail@proton.me">
+          <Icon name="mail" />
+          Send an email
+        </a>
       </div>
     </div>
 
     {avatarImage && (
       <figure class="hero-portrait">
-        <div class="portrait-frame">
+        <div class="portrait-frame" data-halftone-avatar>
           <Image
             priority
             src={avatarImage.src}
             alt={avatarImage.alt}
             class="portrait-img"
-            widths={[256, 384]}
-            sizes="(min-width: 768px) 12rem, 8rem"
-            height={152}
-            width={152}
+            widths={[192, 288]}
+            sizes="(min-width: 700px) 9rem, 6.5rem"
+            height={288}
+            width={288}
           />
+          <canvas class="portrait-halftone" aria-hidden="true"></canvas>
         </div>
-        <figcaption class="portrait-caption">
-          <span>Independent security research</span>
-          <span>Web, mobile, and cloud</span>
-        </figcaption>
       </figure>
     )}
   </div>
-
 </section>
+
+<nav class="trio" aria-label="Quick links">
+  {trio.map((t, i) => (
+    <a
+      class="trio-item scroll-reveal"
+      style={`--reveal-delay: ${i * 70}ms`}
+      href={t.href}
+      target={t.external ? '_blank' : undefined}
+      rel={t.external ? 'noopener noreferrer' : undefined}
+    >
+      <span class="trio-icon"><Icon name={t.icon} /></span>
+      <span class="trio-text">
+        <span class="trio-name">{t.name}</span>
+        <span class="trio-meta">{t.meta}</span>
+      </span>
+    </a>
+  ))}
+</nav>
 
 <section class="profile-note" aria-label="Current work">
   <div class="hero-foot">
@@ -69,21 +88,6 @@ const focus = [
     <div class="hero-intro prose"><slot /></div>
   </div>
 </section>
-
-<section class="focus" aria-labelledby="focus-title">
-  <h2 id="focus-title" class="focus-title">What I investigate</h2>
-  <div class="focus-grid">
-      {focus.map((f, index) => (
-        <article class="focus-item scroll-reveal" style={`--reveal-delay: ${index * 70}ms`}>
-          <span class="fx-mark">{f.mark}</span>
-          <h3 class="fx-name">{f.name}</h3>
-          <p class="fx-desc">{f.desc}</p>
-        </article>
-      ))}
-  </div>
-</section>
-
-{githubCalendar && <GitHubActivityCalendar username={githubCalendar} />}
 
 <script>
   const homeMotionWindow = window as Window & { homeRevealObserver?: IntersectionObserver }
@@ -110,9 +114,57 @@ const focus = [
     items.forEach((item) => homeMotionWindow.homeRevealObserver?.observe(item))
   }
 
-  document.addEventListener('astro:page-load', initHomeReveals)
+  // Halftone-dot hover for the avatar — renders a dithered copy onto a canvas
+  // overlay that cross-fades in on hover. Pure client, no extra assets.
+  function initHalftoneAvatar() {
+    const frame = document.querySelector<HTMLElement>('[data-halftone-avatar]')
+    if (!frame) return
+    const img = frame.querySelector<HTMLImageElement>('.portrait-img')
+    const canvas = frame.querySelector<HTMLCanvasElement>('.portrait-halftone')
+    if (!img || !canvas) return
+
+    const draw = () => {
+      const size = 300
+      const step = 5 // dot cell size — smaller = finer
+      const src = document.createElement('canvas')
+      src.width = size; src.height = size
+      const sctx = src.getContext('2d')
+      if (!sctx) return
+      try {
+        sctx.drawImage(img, 0, 0, size, size)
+      } catch { return }
+      const data = sctx.getImageData(0, 0, size, size).data
+      canvas.width = size; canvas.height = size
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      const fg = getComputedStyle(frame).getPropertyValue('color').trim() || '#000'
+      ctx.clearRect(0, 0, size, size)
+      ctx.fillStyle = fg
+      for (let y = 0; y < size; y += step) {
+        for (let x = 0; x < size; x += step) {
+          const i = (y * size + x) * 4
+          const a = data[i + 3]
+          if (a < 40) continue
+          const lum = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255
+          const rad = (1 - lum) * (step * 0.72)
+          if (rad < 0.35) continue
+          ctx.beginPath()
+          ctx.arc(x + step / 2, y + step / 2, rad, 0, Math.PI * 2)
+          ctx.fill()
+        }
+      }
+      frame.classList.add('halftone-ready')
+    }
+
+    if (img.complete) draw()
+    else img.addEventListener('load', draw, { once: true })
+  }
+
+  function initHome() { initHomeReveals(); initHalftoneAvatar() }
+  document.addEventListener('astro:page-load', initHome)
   document.addEventListener('astro:before-swap', () => {
     homeMotionWindow.homeRevealObserver?.disconnect()
     document.documentElement.classList.remove('home-motion-ready')
   })
 </script>
+

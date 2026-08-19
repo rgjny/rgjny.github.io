@@ -1,59 +1,118 @@
 ---
 ---
-<div id="lb-overlay" onclick="this.classList.remove('active')">
-  <span id="lb-close">✕</span>
-  <img id="lb-img" src="" alt="" onclick="event.stopPropagation()" />
+<div id="lb-overlay" aria-hidden="true">
+  <button id="lb-close" aria-label="Close image">✕</button>
+  <figure id="lb-figure">
+    <img id="lb-img" src="" alt="" />
+    <figcaption id="lb-cap"></figcaption>
+  </figure>
 </div>
 
 <style>
   #lb-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.88);
-    z-index: 9999;
-    cursor: zoom-out;
-    align-items: center;
-    justify-content: center;
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1rem; padding: 4vmin;
+    background: color-mix(in srgb, #0a0806 82%, transparent);
+    backdrop-filter: blur(8px) saturate(1.05);
+    -webkit-backdrop-filter: blur(8px) saturate(1.05);
+    opacity: 0; visibility: hidden; cursor: zoom-out;
+    transition: opacity .4s cubic-bezier(.22,1,.36,1), visibility .4s;
   }
-  #lb-overlay.active { display: flex; }
+  #lb-overlay.active { opacity: 1; visibility: visible; }
   #lb-close {
-    position: fixed;
-    top: 1.2rem;
-    right: 1.5rem;
-    color: #fff;
-    font-size: 1.5rem;
-    cursor: pointer;
-    opacity: 0.7;
+    position: fixed; top: 1.1rem; right: 1.3rem;
+    width: 2.5rem; height: 2.5rem; display: grid; place-items: center;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
+    color: #fff; font-size: 1.1rem; border-radius: 999px; cursor: pointer;
+    opacity: 0.85; transition: background .25s, transform .25s;
   }
+  #lb-close:hover { background: rgba(255,255,255,0.18); transform: rotate(90deg); }
+  #lb-figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; max-width: 92vw; max-height: 88vh; }
   #lb-img {
-    max-width: 90vw;
-    max-height: 90vh;
-    border-radius: 6px;
-    box-shadow: 0 0 60px rgba(0,0,0,0.9);
-    animation: pop 0.15s ease;
-    cursor: default;
+    display: block; max-width: 92vw; max-height: 80vh; object-fit: contain;
+    border-radius: 8px; box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    cursor: default; will-change: transform;
   }
-  @keyframes pop {
-    from { transform: scale(0.9); opacity: 0; }
-    to   { transform: scale(1);   opacity: 1; }
+  #lb-cap {
+    font-family: 'JetBrains Mono Variable', ui-monospace, monospace;
+    font-size: 0.72rem; letter-spacing: 0.06em; color: rgba(255,255,255,0.7);
+    text-align: center; max-width: 60ch;
+  }
+  #lb-cap:empty { display: none; }
+  @media (prefers-reduced-motion: reduce) {
+    #lb-overlay { transition: opacity .15s, visibility .15s; }
   }
 </style>
 
 <script>
-  const overlay = document.getElementById('lb-overlay');
-  const lbImg = document.getElementById('lb-img');
+  function initLightbox() {
+    const overlay = document.getElementById('lb-overlay') as HTMLElement | null
+    const lbImg = document.getElementById('lb-img') as HTMLImageElement | null
+    const lbCap = document.getElementById('lb-cap') as HTMLElement | null
+    const closeBtn = document.getElementById('lb-close')
+    if (!overlay || !lbImg || !lbCap) return
 
-  document.querySelectorAll('.prose img').forEach(img => {
-    img.style.cursor = 'zoom-in';
-    img.addEventListener('click', () => {
-      lbImg.src = img.src;
-      lbImg.alt = img.alt;
-      overlay.classList.add('active');
-    });
-  });
+    let originRect: DOMRect | null = null
+    const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') overlay.classList.remove('active');
-  });
+    const open = (img: HTMLImageElement) => {
+      originRect = img.getBoundingClientRect()
+      lbImg.src = img.currentSrc || img.src
+      lbImg.alt = img.alt
+      // pull caption from a wrapping <figure><figcaption>
+      const cap = img.closest('figure')?.querySelector('figcaption')?.textContent || ''
+      lbCap.textContent = cap
+      overlay.classList.add('active')
+      overlay.setAttribute('aria-hidden', 'false')
+      document.body.style.overflow = 'hidden'
+      if (reduce() || !originRect) return
+      requestAnimationFrame(() => {
+        const t = lbImg.getBoundingClientRect()
+        if (!t.width || !originRect) return
+        const dx = originRect.left + originRect.width / 2 - (t.left + t.width / 2)
+        const dy = originRect.top + originRect.height / 2 - (t.top + t.height / 2)
+        const s = Math.max(0.05, originRect.width / t.width)
+        lbImg.animate(
+          [
+            { transform: `translate(${dx}px, ${dy}px) scale(${s})`, opacity: 0.4 },
+            { transform: 'none', opacity: 1 },
+          ],
+          { duration: 420, easing: 'cubic-bezier(.22,1,.36,1)' },
+        )
+      })
+    }
+
+    const close = () => {
+      const finish = () => {
+        overlay.classList.remove('active')
+        overlay.setAttribute('aria-hidden', 'true')
+        document.body.style.overflow = ''
+      }
+      if (reduce() || !originRect) return finish()
+      const t = lbImg.getBoundingClientRect()
+      const dx = originRect.left + originRect.width / 2 - (t.left + t.width / 2)
+      const dy = originRect.top + originRect.height / 2 - (t.top + t.height / 2)
+      const s = Math.max(0.05, originRect.width / t.width)
+      const anim = lbImg.animate(
+        [
+          { transform: 'none', opacity: 1 },
+          { transform: `translate(${dx}px, ${dy}px) scale(${s})`, opacity: 0.2 },
+        ],
+        { duration: 340, easing: 'cubic-bezier(.22,1,.36,1)' },
+      )
+      overlay.style.opacity = '0'
+      anim.finished.finally(() => { overlay.style.opacity = ''; finish() })
+    }
+
+    document.querySelectorAll<HTMLImageElement>('.prose img').forEach((img) => {
+      img.style.cursor = 'zoom-in'
+      img.addEventListener('click', () => open(img))
+    })
+    overlay.addEventListener('click', (e) => { if (e.target !== lbImg) close() })
+    closeBtn?.addEventListener('click', close)
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay.classList.contains('active')) close() })
+  }
+
+  document.addEventListener('astro:page-load', initLightbox)
 </script>

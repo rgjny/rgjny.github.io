@@ -1,0 +1,116 @@
+---
+/**
+ * GenArt — deterministic monochrome generative art, seeded from a string so
+ * every post gets a unique-but-stable image. Two variants rendered inline:
+ *   · halftone — a dithered dot-field with a wavy ridge (like a scan / signal)
+ *   · graph    — node-graph line art, parallel lines converging to a hub
+ * Colours are currentColor + one accent node, so it themes automatically.
+ */
+interface Props {
+  seed: string
+  variant?: 'halftone' | 'graph'
+  /** render both variants (for a toggle); otherwise only `variant` */
+  both?: boolean
+  ratio?: number // width:height, default 3
+  class?: string
+}
+const { seed, variant = 'halftone', both = false, ratio = 3, class: className } = Astro.props
+
+const W = 600
+const H = Math.round(W / ratio)
+
+// --- seeded PRNG (mulberry32 + xfnv1a hash) ---
+function hash(str: string): number {
+  let h = 1779033703 ^ str.length
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353)
+    h = (h << 13) | (h >>> 19)
+  }
+  return (h ^ (h >>> 16)) >>> 0
+}
+function mulberry32(a: number) {
+  return function () {
+    a |= 0; a = (a + 0x6d2b79f5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+const rnd = mulberry32(hash(seed))
+const r = (min: number, max: number) => min + rnd() * (max - min)
+
+// ── HALFTONE ──────────────────────────────────────────────
+const step = 15
+const cols = Math.floor(W / step)
+const rows = Math.floor(H / step)
+// a couple of seeded ridge waves the dots swell around
+const p1 = r(0, Math.PI * 2), p2 = r(0, Math.PI * 2)
+const f1 = r(2.2, 4.5), f2 = r(1.2, 2.8), amp = r(0.16, 0.30)
+const dots: { x: number; y: number; rad: number }[] = []
+for (let cy = 0; cy < rows; cy++) {
+  for (let cx = 0; cx < cols; cx++) {
+    const x = cx * step + step / 2
+    const y = cy * step + step / 2
+    const nx = x / W, ny = y / H
+    // wavy ridge through the middle
+    const ridge = 0.5 + amp * Math.sin(nx * Math.PI * f1 + p1) + amp * 0.6 * Math.sin(nx * Math.PI * f2 + p2)
+    const d = Math.abs(ny - ridge)
+    // low-freq background texture + ridge proximity
+    const bg = 0.32 * (0.5 + 0.5 * Math.sin(nx * 9 + p2) * Math.cos(ny * 7 + p1))
+    let v = Math.max(0, 1 - d * 3.4) * 0.85 + bg
+    v = Math.min(1, v)
+    const rad = 0.4 + v * (step * 0.44)
+    if (rad > 0.6) dots.push({ x: +x.toFixed(1), y: +y.toFixed(1), rad: +rad.toFixed(2) })
+  }
+}
+
+// ── GRAPH ─────────────────────────────────────────────────
+const hub = { x: W * r(0.5, 0.62), y: H * r(0.55, 0.7) }
+const nLines = Math.floor(r(5, 8))
+const lineStartX = W * 0.14
+const lines: string[] = []
+for (let i = 0; i < nLines; i++) {
+  const y = H * (0.22 + (i / (nLines - 1)) * 0.56)
+  const bendX = lineStartX + r(80, 150)
+  lines.push(`M ${lineStartX.toFixed(0)} ${y.toFixed(1)} L ${bendX.toFixed(0)} ${y.toFixed(1)} L ${hub.x.toFixed(0)} ${hub.y.toFixed(0)}`)
+}
+const nNodes = Math.floor(r(4, 7))
+const nodes: { x: number; y: number; rad: number; accent: boolean }[] = []
+const branches: string[] = []
+const dashed: string[] = []
+let px = hub.x, py = hub.y
+for (let i = 0; i < nNodes; i++) {
+  const nx = hub.x + (i + 1) * ((W * 0.9 - hub.x) / nNodes) + r(-14, 14)
+  const ny = H * r(0.2, 0.85)
+  branches.push(`M ${px.toFixed(0)} ${py.toFixed(0)} L ${nx.toFixed(0)} ${ny.toFixed(0)}`)
+  if (rnd() > 0.5) dashed.push(`M ${nx.toFixed(0)} ${ny.toFixed(0)} L ${(nx + r(-30, 30)).toFixed(0)} ${(ny + r(-30, 30)).toFixed(0)}`)
+  nodes.push({ x: +nx.toFixed(0), y: +ny.toFixed(0), rad: +r(2.5, 4).toFixed(1), accent: false })
+  px = nx; py = ny
+}
+const accentIdx = Math.floor(r(0, nodes.length))
+if (nodes[accentIdx]) nodes[accentIdx].accent = true
+
+const showHalftone = both || variant === 'halftone'
+const showGraph = both || variant === 'graph'
+---
+
+<div class:list={['genart', className]} data-variant={variant} data-both={both ? 'true' : undefined}>
+  {showHalftone && (
+    <svg class="genart-svg genart-halftone" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      {dots.map((d) => <circle cx={d.x} cy={d.y} r={d.rad} fill="currentColor" />)}
+    </svg>
+  )}
+  {showGraph && (
+    <svg class="genart-svg genart-graph" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.85">
+        {lines.map((d) => <path d={d} />)}
+        {branches.map((d) => <path d={d} />)}
+        {dashed.map((d) => <path d={d} stroke-dasharray="2 5" opacity="0.5" />)}
+      </g>
+      {nodes.map((n) => (
+        <circle cx={n.x} cy={n.y} r={n.rad} fill={n.accent ? 'var(--accent)' : 'var(--bg)'} stroke={n.accent ? 'var(--accent)' : 'currentColor'} stroke-width="1.2" />
+      ))}
+      <circle cx={hub.x.toFixed(0)} cy={hub.y.toFixed(0)} r="3" fill="currentColor" />
+    </svg>
+  )}
+</div>

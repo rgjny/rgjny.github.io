@@ -1,0 +1,58 @@
+---
+/**
+ * Animated line icons — bakai-lab-inspired micro-interactions.
+ * Each icon is inline SVG using currentColor strokes; movable parts carry a
+ * hook class (ia-arrow, ia-pen…) that the stylesheet springs on hover.
+ * Usage: <Icon name="pen" class="icon-draw" />
+ */
+interface Props {
+  name:
+    | 'arrow' | 'pen' | 'star' | 'face'
+    | 'http' | 'lock' | 'phone' | 'cloud'
+    | 'home' | 'github' | 'mail' | 'sun' | 'search'
+  class?: string
+}
+const { name, class: className } = Astro.props
+---
+
+<span class:list={['icon-anim', className]} data-icon={name} aria-hidden="true">
+  {name === 'arrow' && (
+    <svg viewBox="0 0 24 24"><g class="ia-move ia-arrow"><path stroke d="M7 17 17 7"/><path stroke d="M8 7h9v9"/></g></svg>
+  )}
+  {name === 'pen' && (
+    <svg viewBox="0 0 24 24"><path stroke d="M4 20h4L19 9a2 2 0 0 0-3-3L5 17v3Z" class="ia-move ia-pen"/><path stroke d="M14 7l3 3"/></svg>
+  )}
+  {name === 'star' && (
+    <svg viewBox="0 0 24 24"><path stroke class="ia-move ia-star" d="M12 4l1.9 4.7 5 .3-3.9 3.2 1.3 4.9L12 14.6 7.7 17.3 9 12.4 5.1 9.2l5-.3L12 4Z"/></svg>
+  )}
+  {name === 'face' && (
+    <svg viewBox="0 0 24 24"><g class="ia-move ia-face"><circle stroke cx="12" cy="12" r="8.5"/><path stroke d="M9 15c.9.8 2 1.2 3 1.2s2.1-.4 3-1.2"/><path stroke d="M9 10h.01M15 10h.01"/></g></svg>
+  )}
+  {name === 'http' && (
+    <svg viewBox="0 0 24 24"><g class="ia-move ia-http"><circle stroke cx="12" cy="12" r="8.5"/><path stroke d="M3.5 12h17M12 3.5c2.3 2.3 3.5 5.3 3.5 8.5s-1.2 6.2-3.5 8.5c-2.3-2.3-3.5-5.3-3.5-8.5S9.7 5.8 12 3.5Z"/></g></svg>
+  )}
+  {name === 'lock' && (
+    <svg viewBox="0 0 24 24"><rect stroke x="5" y="11" width="14" height="9" rx="2"/><path stroke class="ia-move ia-lock" d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+  )}
+  {name === 'phone' && (
+    <svg viewBox="0 0 24 24"><g class="ia-move ia-phone"><rect stroke x="7" y="3" width="10" height="18" rx="2.5"/><path stroke d="M11 18h2"/></g></svg>
+  )}
+  {name === 'cloud' && (
+    <svg viewBox="0 0 24 24"><path stroke class="ia-move ia-cloud" d="M7.5 18a4 4 0 0 1-.5-8 5.5 5.5 0 0 1 10.6 1.3A3.5 3.5 0 0 1 17 18H7.5Z"/></svg>
+  )}
+  {name === 'home' && (
+    <svg viewBox="0 0 24 24"><g class="ia-move ia-home"><path stroke d="M4 11 12 4l8 7"/><path stroke d="M6 10v9h12v-9"/></g></svg>
+  )}
+  {name === 'github' && (
+    <svg viewBox="0 0 24 24"><path stroke class="ia-move ia-github" d="M9 19c-4 1.3-4-2-5.5-2.5M15 21v-3.2a2.8 2.8 0 0 0-.8-2.2c2.7-.3 5.5-1.3 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.3 4.3 0 0 0-.1-3.2s-1-.3-3.4 1.3a11.6 11.6 0 0 0-6 0C6 1.9 5 2.2 5 2.2a4.3 4.3 0 0 0-.1 3.2A4.6 4.6 0 0 0 3.5 8.6c0 4.6 2.8 5.7 5.5 6a2.8 2.8 0 0 0-.8 2.1V21"/></svg>
+  )}
+  {name === 'mail' && (
+    <svg viewBox="0 0 24 24"><rect stroke x="3" y="5" width="18" height="14" rx="2.5"/><path stroke class="ia-move ia-mail" d="m4 7 8 6 8-6"/></svg>
+  )}
+  {name === 'sun' && (
+    <svg viewBox="0 0 24 24"><g class="ia-move ia-sun"><circle stroke cx="12" cy="12" r="4"/><path stroke d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/></g></svg>
+  )}
+  {name === 'search' && (
+    <svg viewBox="0 0 24 24"><circle stroke cx="11" cy="11" r="7"/><path stroke class="ia-move ia-arrow" d="m20 20-3.5-3.5"/></svg>
+  )}
+</span>
