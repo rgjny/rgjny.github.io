@@ -40,7 +40,7 @@ const mode = cover ? 'image' : 'art'
           src={cover}
           alt={coverAlt || ''}
           class="pb-cover"
-          widths={[640, 960, 1280]}
+          widths={[640, 960, 1280, 1536]}
           sizes="(min-width: 768px) 44rem, 100vw"
         />
         <canvas class="pb-dither" aria-hidden="true"></canvas>
@@ -71,7 +71,30 @@ const mode = cover ? 'image' : 'art'
 </dl>
 
 <script>
-  import { animateDither } from '~/scripts/halftone'
+  import { animateDither, staticDither } from '~/scripts/halftone'
+
+  const bannerWin = window as Window & {
+    pbThemeObs?: MutationObserver
+    pbResizeObs?: ResizeObserver
+  }
+
+  // Repaint every banner currently showing its dither layer (no re-animation).
+  function repaintDithered() {
+    document.querySelectorAll<HTMLElement>('.post-banner').forEach((banner) => {
+      if (banner.getAttribute('data-view') !== 'dither') return
+      const img = banner.querySelector<HTMLImageElement>('.pb-cover')
+      const canvas = banner.querySelector<HTMLCanvasElement>('.pb-dither')
+      const art = banner.querySelector<HTMLElement>('.post-banner-art')
+      if (!img || !canvas || !img.complete || !img.naturalWidth) return
+      // --text, not `color` — `color` is mid-transition for ~420ms after a
+      // theme flip and would repaint in the previous theme's ink.
+      const ink =
+        getComputedStyle(art || banner).getPropertyValue('--text').trim() ||
+        getComputedStyle(art || banner).color.trim() ||
+        '#26221c'
+      staticDither(canvas, img, ink, 5, false)
+    })
+  }
 
   function initBanners() {
     document.querySelectorAll<HTMLElement>('.post-banner').forEach((banner) => {
@@ -82,11 +105,29 @@ const mode = cover ? 'image' : 'art'
       let animating = false
       let dithered = false
 
-      const inkColor = () => getComputedStyle(art || banner).getPropertyValue('color').trim() || '#26221c'
+      const inkColor = () =>
+        getComputedStyle(art || banner).getPropertyValue('--text').trim() ||
+        getComputedStyle(art || banner).color.trim() ||
+        '#26221c'
+      const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-      const toImage = () => {
-        if (mode !== 'image') return
-        banner.setAttribute('data-view', 'image')
+      // First paint: dither the cover in and fade the raw image out —
+      // the ink view is the default; clicking reveals the raw image.
+      const drawInitial = () => {
+        if (!img || !canvas || animating) return
+        banner.setAttribute('data-view', 'dither')
+        if (reduce()) {
+          staticDither(canvas, img, inkColor(), 5, false)
+          if (img) img.style.opacity = '0'
+          dithered = true
+          return
+        }
+        animating = true
+        animateDither(canvas, img, inkColor(), {
+          duration: 1100,
+          onProgress: (t) => { if (img) img.style.opacity = String(1 - t) },
+          onDone: () => { dithered = true; animating = false },
+        })
       }
 
       const toggle = () => {
@@ -95,17 +136,15 @@ const mode = cover ? 'image' : 'art'
           return
         }
         if (!img || !canvas || animating) return
-        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        animating = true
-        banner.setAttribute('data-view', 'dither') // fades canvas layer in via CSS opacity
-        if (reduce) {
+        if (reduce()) {
           animateDither(canvas, img, inkColor(), { reverse: dithered, duration: 1 })
           dithered = !dithered
           if (img) img.style.opacity = dithered ? '0' : '1'
           if (!dithered) banner.setAttribute('data-view', 'image')
-          animating = false
           return
         }
+        animating = true
+        banner.setAttribute('data-view', 'dither') // fades canvas layer in via CSS opacity
         animateDither(canvas, img, inkColor(), {
           reverse: dithered,
           duration: 950,
@@ -118,9 +157,39 @@ const mode = cover ? 'image' : 'art'
         })
       }
 
+      if (mode === 'image') {
+        if (img && img.complete && img.naturalWidth) drawInitial()
+        else img?.addEventListener('load', drawInitial, { once: true })
+      }
+
       banner.querySelector('.post-banner-toggle')?.addEventListener('click', (e) => { e.stopPropagation(); toggle() })
       art?.addEventListener('click', toggle)
     })
+
+    // Re-ink dithered banners when the theme flips. Deferred past the style
+    // flush — reading the computed color in the same tick as the attribute
+    // change returns the previous theme's ink.
+    bannerWin.pbThemeObs?.disconnect()
+    bannerWin.pbThemeObs = new MutationObserver(() => requestAnimationFrame(repaintDithered))
+    bannerWin.pbThemeObs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+
+    // Keep canvas buffers matched to layout — a stale buffer gets
+    // CSS-stretched and the dots bloat into a blob (rotate/resize/zoom).
+    bannerWin.pbResizeObs?.disconnect()
+    const seen = new WeakMap<Element, number>()
+    bannerWin.pbResizeObs = new ResizeObserver((entries) => {
+      let changed = false
+      for (const entry of entries) {
+        const w = Math.round(entry.contentRect.width)
+        if (seen.get(entry.target) !== w) { seen.set(entry.target, w); changed = true }
+      }
+      if (changed) repaintDithered()
+    })
+    document.querySelectorAll<HTMLElement>('.post-banner-art').forEach((art) => bannerWin.pbResizeObs?.observe(art))
   }
   document.addEventListener('astro:page-load', initBanners)
+  document.addEventListener('astro:before-swap', () => {
+    bannerWin.pbThemeObs?.disconnect()
+    bannerWin.pbResizeObs?.disconnect()
+  })
 </script>

@@ -94,6 +94,7 @@ const trio = [
   const homeMotionWindow = window as Window & {
     homeRevealObserver?: IntersectionObserver
     homePortraitThemeObs?: MutationObserver
+    homePortraitResizeObs?: ResizeObserver
   }
 
   function initHomeReveals() {
@@ -126,7 +127,13 @@ const trio = [
     const img = frame.querySelector<HTMLImageElement>('.portrait-src')
     const canvas = frame.querySelector<HTMLCanvasElement>('.portrait-halftone')
     if (!img || !canvas) return
-    const ink = () => getComputedStyle(frame).getPropertyValue('color').trim() || '#ecebe6'
+    // Ink = the theme's --text. Read the custom property (not `color`) —
+    // `color` is mid-transition for ~420ms after a theme flip, which would
+    // repaint the portrait in the previous theme's ink.
+    const ink = () =>
+      getComputedStyle(frame).getPropertyValue('--text').trim() ||
+      getComputedStyle(frame).color.trim() ||
+      '#ecebe6'
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     const draw = () => {
@@ -138,12 +145,31 @@ const trio = [
     else img.addEventListener('load', draw, { once: true })
 
     // Repaint (no re-animation) when the theme flips so ink tracks --text.
+    // The repaint is deferred past the style flush — reading the computed
+    // color in the same tick as the attribute change returns the *old*
+    // theme's ink and leaves the portrait invisible in the new theme.
     homeMotionWindow.homePortraitThemeObs?.disconnect()
     const obs = new MutationObserver(() => {
-      if (img.complete && img.naturalWidth) staticDither(canvas, img, ink(), 4, false)
+      requestAnimationFrame(() => {
+        if (img.complete && img.naturalWidth) staticDither(canvas, img, ink(), 4, false)
+      })
     })
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     homeMotionWindow.homePortraitThemeObs = obs
+
+    // Keep the canvas buffer matched to the laid-out frame — a stale buffer
+    // gets CSS-stretched and the dots bloat into a blob (rotate/resize/zoom).
+    homeMotionWindow.homePortraitResizeObs?.disconnect()
+    let lastW = -1
+    const resizeObs = new ResizeObserver(() => {
+      const w = Math.round(frame.getBoundingClientRect().width)
+      if (w === lastW) return
+      lastW = w
+      if (frame.classList.contains('halftone-ready') && img.complete && img.naturalWidth)
+        staticDither(canvas, img, ink(), 4, false)
+    })
+    resizeObs.observe(frame)
+    homeMotionWindow.homePortraitResizeObs = resizeObs
   }
 
   function initHome() { initHomeReveals(); initHalftoneAvatar() }
@@ -151,6 +177,7 @@ const trio = [
   document.addEventListener('astro:before-swap', () => {
     homeMotionWindow.homeRevealObserver?.disconnect()
     homeMotionWindow.homePortraitThemeObs?.disconnect()
+    homeMotionWindow.homePortraitResizeObs?.disconnect()
     document.documentElement.classList.remove('home-motion-ready')
   })
 </script>

@@ -392,9 +392,12 @@ a { color: var(--text) !important; text-decoration: none; }
 ═══════════════════════════════════════════════════════════ */
 .hero { position: relative; margin: 0; padding: clamp(2rem, 7vw, 3.75rem) 0 0; }
 
-.plate { display: grid; grid-template-columns: 1fr; gap: 2.25rem; align-items: start; }
-@media (min-width: 680px) {
-  .plate { grid-template-columns: minmax(0,1fr) auto; gap: clamp(1.5rem,5vw,3rem); align-items: start; }
+/* Two columns at every width — bio block left, portrait right. On narrow
+   screens the portrait simply shrinks so it sits beside the text instead
+   of being dumped below it. */
+.plate {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  gap: clamp(1.25rem, 5vw, 3rem); align-items: start;
 }
 
 /* Name row — small, with the orange pixel mark */
@@ -428,10 +431,9 @@ a { color: var(--text) !important; text-decoration: none; }
 .hero-bio .lx { font-size: 0.72em; opacity: 0.5; margin-left: 1px; vertical-align: 0.12em; }
 
 /* Portrait — square, always-dithered ink dots (halftone) */
-.hero-portrait { position: relative; justify-self: start; margin: 0; }
-@media (min-width: 680px) { .hero-portrait { justify-self: end; } }
+.hero-portrait { position: relative; justify-self: end; margin: 0; }
 .portrait-frame {
-  position: relative; width: clamp(9rem, 32vw, 13.5rem); aspect-ratio: 1;
+  position: relative; width: clamp(6.75rem, 24vw, 13.5rem); aspect-ratio: 1;
   color: var(--text);
 }
 .portrait-src {

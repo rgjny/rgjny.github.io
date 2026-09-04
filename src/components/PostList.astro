@@ -55,7 +55,12 @@ function shortDate(d: Date) {
       const img = thumb.querySelector<HTMLImageElement>('.wr-photo')
       const canvas = thumb.querySelector<HTMLCanvasElement>('.wr-dither')
       if (!img || !canvas) return
-      const ink = getComputedStyle(thumb).getPropertyValue('color').trim() || '#26221c'
+      // --text, not `color` — `color` is mid-transition for ~420ms after a
+      // theme flip and would re-ink thumbnails in the previous theme's color.
+      const ink =
+        getComputedStyle(thumb).getPropertyValue('--text').trim() ||
+        getComputedStyle(thumb).color.trim() ||
+        '#26221c'
       const render = () => { if (staticDither(canvas, img, ink, 3)) thumb.classList.add('thumb-ready') }
       if (img.complete && img.naturalWidth) render()
       else img.addEventListener('load', render, { once: true })
@@ -65,8 +70,10 @@ function shortDate(d: Date) {
   function initThumbs() {
     renderThumbs()
     // Re-ink when the theme flips so thumbnails keep contrast in both modes.
+    // Deferred past the style flush — reading the computed color in the same
+    // tick as the attribute change returns the previous theme's ink.
     thumbWin.wrThumbThemeObs?.disconnect()
-    const obs = new MutationObserver(() => renderThumbs())
+    const obs = new MutationObserver(() => requestAnimationFrame(renderThumbs))
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     thumbWin.wrThumbThemeObs = obs
   }

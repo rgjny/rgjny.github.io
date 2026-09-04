@@ -33,7 +33,9 @@ export function buildDots(img: HTMLImageElement, W: number, H: number, step: num
       const i = (y * W + x) * 4
       const lum = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255
       const a = data[i + 3] / 255
-      const v = (invert ? lum : 1 - lum) * a
+      // cap effective darkness so dense areas keep visible dot texture
+      // instead of merging into a solid ink slab
+      const v = Math.min((invert ? lum : 1 - lum) * a, 0.88)
       const r = v * (step * 0.62)
       if (r < 0.35) continue
       // reveal delay biased by position + a little jitter → scattered pop-in
