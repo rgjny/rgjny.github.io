@@ -10,7 +10,12 @@ const currentPath = Astro.url.pathname
   <div class="header-inner">
     <!-- Logo -->
     <a id="logo" href="/" class="logo-link no-underline">
-      <span class="logo-mark">rgjny<span class="logo-dot">.</span></span>
+      <span class="logo-mark" aria-label="rgjny">
+        {'rgjny'.split('').map((ch, i) => (
+          <span class="name-letter" style={`--i: ${i}`} aria-hidden="true">{ch}</span>
+        ))}
+        <span class="logo-dot" style="--i: 5" aria-hidden="true">.</span>
+      </span>
       <span class="logo-sub">security journal</span>
     </a>
 
@@ -111,9 +116,20 @@ const currentPath = Astro.url.pathname
         applyTheme(next)
         return
       }
-      html.classList.add('theme-switching')
+      // Circular reveal — the new theme expands out of the toggle button.
+      html.classList.add('theme-switching', 'theme-reveal')
       const transition = (document as any).startViewTransition(() => applyTheme(next))
-      transition.finished.finally(() => html.classList.remove('theme-switching'))
+      transition.ready.then(() => {
+        const b = btn!.getBoundingClientRect()
+        const x = b.left + b.width / 2
+        const y = b.top + b.height / 2
+        const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
+        document.documentElement.animate(
+          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+          { duration: 550, easing: 'cubic-bezier(.22,1,.36,1)', pseudoElement: '::view-transition-new(root)' }
+        )
+      }).catch(() => {})
+      transition.finished.finally(() => html.classList.remove('theme-switching', 'theme-reveal'))
     }, { signal })
 
     const navMobileButton = document.getElementById('nav-mobile-button')

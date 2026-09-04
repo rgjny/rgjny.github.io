@@ -50,9 +50,20 @@ const isAbout = path.startsWith('/about')
         localStorage.setItem('theme', next)
       }
       if (!(document as any).startViewTransition || reduce) return apply()
-      html.classList.add('theme-switching')
+      // Circular reveal — the new theme expands out of the dock button.
+      html.classList.add('theme-switching', 'theme-reveal')
       const t = (document as any).startViewTransition(apply)
-      t.finished.finally(() => html.classList.remove('theme-switching'))
+      t.ready.then(() => {
+        const b = btn!.getBoundingClientRect()
+        const x = b.left + b.width / 2
+        const y = b.top + b.height / 2
+        const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
+        document.documentElement.animate(
+          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+          { duration: 550, easing: 'cubic-bezier(.22,1,.36,1)', pseudoElement: '::view-transition-new(root)' }
+        )
+      }).catch(() => {})
+      t.finished.finally(() => html.classList.remove('theme-switching', 'theme-reveal'))
     })
   }
   document.addEventListener('astro:page-load', initDock)

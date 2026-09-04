@@ -1,58 +1,67 @@
 ---
 import { Image } from 'astro:assets'
 import Icon from '~/components/Icon.astro'
+import InlineMark from '~/components/InlineMark.astro'
+import siteConfig from '~/site.config'
 import type { FrontmatterImage } from '~/types'
 
 interface Props {
   avatarImage?: FrontmatterImage
   githubCalendar?: string
+  postCount?: number
 }
-const { avatarImage } = Astro.props
 
-// Quick links (Writing / About / GitHub) — animated icons, cali-style trio
+const { avatarImage, postCount = 0 } = Astro.props
+const gh = siteConfig.socialLinks?.github
+const email = siteConfig.socialLinks?.email
+const tw = siteConfig.socialLinks?.twitter
+
+// Quick-link trio: icon, label, count
 const trio = [
-  { icon: 'pen',    name: 'Writing', meta: 'notes & writeups', href: '/posts' },
-  { icon: 'face',   name: 'About',   meta: 'who I am',         href: '/about' },
-  { icon: 'github', name: 'GitHub',  meta: '@rgjny',           href: 'https://github.com/rgjny', external: true },
+  { icon: 'pen',    name: 'Writing', meta: `${postCount} ${postCount === 1 ? 'post' : 'posts'}`, href: '/posts' },
+  { icon: 'face',   name: 'About',   meta: 'who I am',    href: '/about' },
+  { icon: 'github', name: 'GitHub',  meta: '@rgjny',      href: gh ?? '#', external: true },
 ] as const
 ---
 
 <section class="hero">
-  <div class="hero-eyebrow">
-    <span class="he-tick"></span>
-    <span class="he-text">Security research / est. 2025</span>
-  </div>
-
   <div class="plate">
     <div class="plate-main">
-      <h1 class="hero-name">rgjny<span class="dot">.</span></h1>
-      <p class="hero-role">
-        Bug-bounty hunter chasing the <span class="u-accent">gap</span> between how a system <em>should</em> work and what it really does.
-      </p>
-      <div class="hero-actions">
-        <a class="button button-primary" href="/posts">
-          Read the journal
-          <Icon name="arrow" />
-        </a>
-        <a class="button button-secondary" href="mailto:rgjnymail@proton.me">
-          <Icon name="mail" />
-          Send an email
-        </a>
+      <h1 class="hero-name" aria-label="rgjny">
+        {'rgjny'.split('').map((ch, i) => (
+          <span class="name-letter" style={`--i: ${i}`} aria-hidden="true">{ch}</span>
+        ))}
+        <span class="hero-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      </h1>
+
+      <div class="hero-bio">
+        <p class="fade-up" style="--d:.06s">
+          I <span class="inline-phrase"><span class="inline-word">hunt</span> <span class="inline-word">bugs</span><InlineMark name="bug" /></span>
+          for money, mostly on programs nobody's heard of. The interesting ones aren't the loud
+          ones — they're the <span class="inline-phrase"><span class="inline-word">quiet</span> <span class="inline-word">broken</span> <span class="inline-word">thing</span><InlineMark name="search" /></span>
+          sitting three steps deep that nobody bothered to check.
+        </p>
+        <div class="hero-slot fade-up" style="--d:.14s"><slot /></div>
+        <p class="fade-up" style="--d:.22s">
+          Find me at
+          {gh && (<><a href={gh} target="_blank" rel="noopener noreferrer">GitHub<Icon name="ext" class="ext-mark" /></a>{(tw || email) ? ', ' : ''}</>)}
+          {tw && (<><a href={tw} target="_blank" rel="noopener noreferrer">@rgjny_<Icon name="ext" class="ext-mark" /></a>{email ? ' and ' : ''}</>)}
+          {email && (<a href={`mailto:${email}`}>{email}</a>)}
+        </p>
       </div>
     </div>
 
     {avatarImage && (
-      <figure class="hero-portrait">
+      <figure class="hero-portrait fade-up" style="--d:.12s">
         <div class="portrait-frame" data-halftone-avatar>
           <Image
-            priority
             src={avatarImage.src}
             alt={avatarImage.alt}
-            class="portrait-img"
-            widths={[192, 288]}
-            sizes="(min-width: 700px) 9rem, 6.5rem"
-            height={288}
-            width={288}
+            class="portrait-src"
+            widths={[240, 480]}
+            sizes="240px"
+            height={480}
+            width={480}
           />
           <canvas class="portrait-halftone" aria-hidden="true"></canvas>
         </div>
@@ -72,25 +81,20 @@ const trio = [
     >
       <span class="trio-icon"><Icon name={t.icon} /></span>
       <span class="trio-text">
-        <span class="trio-name">{t.name}</span>
+        <span class="trio-name">{t.name}{t.external && <Icon name="ext" class="ext-mark" />}</span>
         <span class="trio-meta">{t.meta}</span>
       </span>
     </a>
   ))}
 </nav>
 
-<section class="profile-note" aria-label="Current work">
-  <div class="hero-foot">
-    <div class="hero-status">
-      <span class="status-dot"></span>
-      <span>Currently hunting</span>
-    </div>
-    <div class="hero-intro prose"><slot /></div>
-  </div>
-</section>
-
 <script>
-  const homeMotionWindow = window as Window & { homeRevealObserver?: IntersectionObserver }
+  import { animateDither, staticDither } from '~/scripts/halftone'
+
+  const homeMotionWindow = window as Window & {
+    homeRevealObserver?: IntersectionObserver
+    homePortraitThemeObs?: MutationObserver
+  }
 
   function initHomeReveals() {
     homeMotionWindow.homeRevealObserver?.disconnect()
@@ -114,57 +118,39 @@ const trio = [
     items.forEach((item) => homeMotionWindow.homeRevealObserver?.observe(item))
   }
 
-  // Halftone-dot hover for the avatar — renders a dithered copy onto a canvas
-  // overlay that cross-fades in on hover. Pure client, no extra assets.
+  // Dithered portrait — halftone. Dark line-art renders as ink
+  // dots (color follows the theme's text color), materializing on first paint.
   function initHalftoneAvatar() {
     const frame = document.querySelector<HTMLElement>('[data-halftone-avatar]')
     if (!frame) return
-    const img = frame.querySelector<HTMLImageElement>('.portrait-img')
+    const img = frame.querySelector<HTMLImageElement>('.portrait-src')
     const canvas = frame.querySelector<HTMLCanvasElement>('.portrait-halftone')
     if (!img || !canvas) return
+    const ink = () => getComputedStyle(frame).getPropertyValue('color').trim() || '#ecebe6'
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     const draw = () => {
-      const size = 300
-      const step = 5 // dot cell size — smaller = finer
-      const src = document.createElement('canvas')
-      src.width = size; src.height = size
-      const sctx = src.getContext('2d')
-      if (!sctx) return
-      try {
-        sctx.drawImage(img, 0, 0, size, size)
-      } catch { return }
-      const data = sctx.getImageData(0, 0, size, size).data
-      canvas.width = size; canvas.height = size
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-      const fg = getComputedStyle(frame).getPropertyValue('color').trim() || '#000'
-      ctx.clearRect(0, 0, size, size)
-      ctx.fillStyle = fg
-      for (let y = 0; y < size; y += step) {
-        for (let x = 0; x < size; x += step) {
-          const i = (y * size + x) * 4
-          const a = data[i + 3]
-          if (a < 40) continue
-          const lum = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255
-          const rad = (1 - lum) * (step * 0.72)
-          if (rad < 0.35) continue
-          ctx.beginPath()
-          ctx.arc(x + step / 2, y + step / 2, rad, 0, Math.PI * 2)
-          ctx.fill()
-        }
-      }
       frame.classList.add('halftone-ready')
+      if (reduce) { staticDither(canvas, img, ink(), 4, false); return }
+      animateDither(canvas, img, ink(), { cell: 4, duration: 1100, invert: false })
     }
-
-    if (img.complete) draw()
+    if (img.complete && img.naturalWidth) draw()
     else img.addEventListener('load', draw, { once: true })
+
+    // Repaint (no re-animation) when the theme flips so ink tracks --text.
+    homeMotionWindow.homePortraitThemeObs?.disconnect()
+    const obs = new MutationObserver(() => {
+      if (img.complete && img.naturalWidth) staticDither(canvas, img, ink(), 4, false)
+    })
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    homeMotionWindow.homePortraitThemeObs = obs
   }
 
   function initHome() { initHomeReveals(); initHalftoneAvatar() }
   document.addEventListener('astro:page-load', initHome)
   document.addEventListener('astro:before-swap', () => {
     homeMotionWindow.homeRevealObserver?.disconnect()
+    homeMotionWindow.homePortraitThemeObs?.disconnect()
     document.documentElement.classList.remove('home-motion-ready')
   })
 </script>
-

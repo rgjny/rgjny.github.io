@@ -48,7 +48,9 @@ function shortDate(d: Date) {
 <script>
   import { staticDither } from '~/scripts/halftone'
 
-  function initThumbs() {
+  const thumbWin = window as Window & { wrThumbThemeObs?: MutationObserver }
+
+  function renderThumbs() {
     document.querySelectorAll<HTMLElement>('.wr-thumb[data-thumb]').forEach((thumb) => {
       const img = thumb.querySelector<HTMLImageElement>('.wr-photo')
       const canvas = thumb.querySelector<HTMLCanvasElement>('.wr-dither')
@@ -59,5 +61,15 @@ function shortDate(d: Date) {
       else img.addEventListener('load', render, { once: true })
     })
   }
+
+  function initThumbs() {
+    renderThumbs()
+    // Re-ink when the theme flips so thumbnails keep contrast in both modes.
+    thumbWin.wrThumbThemeObs?.disconnect()
+    const obs = new MutationObserver(() => renderThumbs())
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    thumbWin.wrThumbThemeObs = obs
+  }
   document.addEventListener('astro:page-load', initThumbs)
+  document.addEventListener('astro:before-swap', () => thumbWin.wrThumbThemeObs?.disconnect())
 </script>

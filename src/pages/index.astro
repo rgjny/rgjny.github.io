@@ -5,6 +5,7 @@ import { getCollection, render } from 'astro:content'
 import PostList from '~/components/PostList.astro'
 import BlockHeader from '~/components/BlockHeader.astro'
 import HomeBanner from '~/components/HomeBanner.astro'
+import Icon from '~/components/Icon.astro'
 import TagsSection from '~/components/TagsSection.astro'
 import SeriesSection from '~/components/SeriesSection.astro'
 
@@ -34,7 +35,7 @@ const indexNum = postsHaveTags ? pad() : undefined
 
 <Layout>
   {HomeContent && (
-    <HomeBanner avatarImage={homeAvatarImage} githubCalendar={homeGithubCalendar}>
+    <HomeBanner avatarImage={homeAvatarImage} githubCalendar={homeGithubCalendar} postCount={sortedPosts.length}>
       <HomeContent />
     </HomeBanner>
   )}
@@ -43,9 +44,10 @@ const indexNum = postsHaveTags ? pad() : undefined
       <div class="block-header-wrapper">
         <div class="block-header-title">
           <span class="block-header-num">{writingNum}</span>
+          <span class="block-header-hatch" aria-hidden="true"></span>
           <span class="block-header-label">Writing</span>
           <span class="block-header-line"></span>
-          <a class="block-header-more" href="/posts">View all</a>
+          <a class="block-header-more" href="/posts">View all<Icon name="ext" class="ext-mark" /></a>
         </div>
       </div>
       <PostList posts={sortedPosts.slice().reverse().slice(0, 5)} />

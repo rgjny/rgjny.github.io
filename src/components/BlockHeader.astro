@@ -9,6 +9,7 @@ const { num } = Astro.props
 <div class="block-header-wrapper">
   <div class="block-header-title">
     {num && <span class="block-header-num">{num}</span>}
+    <span class="block-header-hatch" aria-hidden="true"></span>
     <span class="block-header-label"><slot /></span>
     <span class="block-header-line"></span>
   </div>

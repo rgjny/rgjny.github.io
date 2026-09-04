@@ -15,8 +15,10 @@ function coverRect(img: HTMLImageElement, W: number, H: number) {
   return { sx, sy, sw, sh }
 }
 
-/** Sample the image into a dot list. Returns null if the image can't be read. */
-export function buildDots(img: HTMLImageElement, W: number, H: number, step: number): Dot[] | null {
+/** Sample the image into a dot list. Returns null if the image can't be read.
+ *  `invert` sizes dots by brightness instead of darkness — use for light
+ *  line-art on a transparent/dark ground (renders the strokes as dots). */
+export function buildDots(img: HTMLImageElement, W: number, H: number, step: number, invert = false): Dot[] | null {
   const off = document.createElement('canvas')
   off.width = W; off.height = H
   const octx = off.getContext('2d', { willReadFrequently: true })
@@ -30,7 +32,9 @@ export function buildDots(img: HTMLImageElement, W: number, H: number, step: num
     for (let x = 0; x < W; x += step) {
       const i = (y * W + x) * 4
       const lum = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255
-      const r = (1 - lum) * (step * 0.62)
+      const a = data[i + 3] / 255
+      const v = (invert ? lum : 1 - lum) * a
+      const r = v * (step * 0.62)
       if (r < 0.35) continue
       // reveal delay biased by position + a little jitter → scattered pop-in
       const d = Math.min(1, Math.max(0, (x / W) * 0.5 + (y / H) * 0.3 + Math.random() * 0.35))
@@ -58,13 +62,13 @@ function paint(ctx: CanvasRenderingContext2D, W: number, H: number, dots: Dot[],
 }
 
 /** Fully paint the dithered image immediately (t = 1). */
-export function staticDither(canvas: HTMLCanvasElement, img: HTMLImageElement, color: string, cell = 5) {
+export function staticDither(canvas: HTMLCanvasElement, img: HTMLImageElement, color: string, cell = 5, invert = false) {
   const box = canvas.getBoundingClientRect()
   const scale = Math.min(2, window.devicePixelRatio || 1)
   const W = Math.max(1, Math.round((box.width || canvas.clientWidth || 300) * scale))
   const H = Math.max(1, Math.round((box.height || canvas.clientHeight || 200) * scale))
   const step = Math.max(3, Math.round(cell * scale))
-  const dots = buildDots(img, W, H, step)
+  const dots = buildDots(img, W, H, step, invert)
   if (!dots) return false
   canvas.width = W; canvas.height = H
   const ctx = canvas.getContext('2d')
@@ -81,15 +85,15 @@ export function animateDither(
   canvas: HTMLCanvasElement,
   img: HTMLImageElement,
   color: string,
-  opts: { cell?: number; duration?: number; reverse?: boolean; onProgress?: (t: number) => void; onDone?: () => void } = {},
+  opts: { cell?: number; duration?: number; reverse?: boolean; invert?: boolean; onProgress?: (t: number) => void; onDone?: () => void } = {},
 ) {
-  const { cell = 5, duration = 900, reverse = false, onProgress, onDone } = opts
+  const { cell = 5, duration = 900, reverse = false, invert = false, onProgress, onDone } = opts
   const box = canvas.getBoundingClientRect()
   const scale = Math.min(2, window.devicePixelRatio || 1)
   const W = Math.max(1, Math.round((box.width || 300) * scale))
   const H = Math.max(1, Math.round((box.height || 200) * scale))
   const step = Math.max(3, Math.round(cell * scale))
-  const dots = buildDots(img, W, H, step)
+  const dots = buildDots(img, W, H, step, invert)
   const ctx = canvas.getContext('2d')
   if (!dots || !ctx) { onProgress?.(reverse ? 0 : 1); onDone?.(); return }
   canvas.width = W; canvas.height = H

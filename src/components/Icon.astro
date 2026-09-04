@@ -1,6 +1,6 @@
 ---
 /**
- * Animated line icons — bakai-lab-inspired micro-interactions.
+ * Animated line icons — hover micro-interactions.
  * Each icon is inline SVG using currentColor strokes; movable parts carry a
  * hook class (ia-arrow, ia-pen…) that the stylesheet springs on hover.
  * Usage: <Icon name="pen" class="icon-draw" />
@@ -10,6 +10,7 @@ interface Props {
     | 'arrow' | 'pen' | 'star' | 'face'
     | 'http' | 'lock' | 'phone' | 'cloud'
     | 'home' | 'github' | 'mail' | 'sun' | 'search'
+    | 'ext'
   class?: string
 }
 const { name, class: className } = Astro.props
@@ -54,5 +55,8 @@ const { name, class: className } = Astro.props
   )}
   {name === 'search' && (
     <svg viewBox="0 0 24 24"><circle stroke cx="11" cy="11" r="7"/><path stroke class="ia-move ia-arrow" d="m20 20-3.5-3.5"/></svg>
+  )}
+  {name === 'ext' && (
+    <svg viewBox="0 0 16 16"><path stroke d="M4.606 11.427 11.394 4.638"/><path stroke d="M5.707 4.668 11.394 4.638 11.364 10.325"/></svg>
   )}
 </span>

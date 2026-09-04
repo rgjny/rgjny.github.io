@@ -131,8 +131,16 @@ let generatedCss: string = cssLines.join('\n')
     <script is:inline>
       (function() {
         var saved = localStorage.getItem('theme');
-        var preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', saved || preferred);
+        document.documentElement.setAttribute('data-theme', saved || 'dark');
+      })();
+    </script>
+    <!-- Name entrance: play once per full page load, then release (hover takes over) -->
+    <script is:inline>
+      (function() {
+        document.documentElement.classList.add('name-enter');
+        setTimeout(function() {
+          document.documentElement.classList.remove('name-enter');
+        }, 1600);
       })();
     </script>
     <meta charset="UTF-8" />
@@ -171,8 +179,7 @@ let generatedCss: string = cssLines.join('\n')
     <script is:inline>
       document.addEventListener('astro:after-swap', function () {
         var saved = localStorage.getItem('theme')
-        var preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-        document.documentElement.setAttribute('data-theme', saved || preferred)
+        document.documentElement.setAttribute('data-theme', saved || 'dark')
       })
     </script>
   </head>
