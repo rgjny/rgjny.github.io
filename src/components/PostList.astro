@@ -28,8 +28,8 @@ function shortDate(d: Date) {
                 class="wr-photo"
                 src={post.data.coverImage.src}
                 alt=""
-                widths={[96, 192]}
-                sizes="96px"
+                widths={[480, 960]}
+                sizes="(max-width: 640px) 100vw, 96px"
                 loading="lazy"
               />
             </>
@@ -37,9 +37,11 @@ function shortDate(d: Date) {
             <GenArt seed={post.id} variant="halftone" ratio={1.5} />
           )}
         </span>
-        <span class="wr-title">{post.data.title}</span>
-        <span class="wr-leader" aria-hidden="true"></span>
-        <time class="wr-date mono">{shortDate(post.data.published)}</time>
+        <span class="wr-line">
+          <span class="wr-title">{post.data.title}</span>
+          <span class="wr-leader" aria-hidden="true"></span>
+          <time class="wr-date mono">{shortDate(post.data.published)}</time>
+        </span>
       </a>
     </li>
   ))}
