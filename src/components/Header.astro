@@ -11,9 +11,13 @@ const currentPath = Astro.url.pathname
     <!-- Logo -->
     <a id="logo" href="/" class="logo-link no-underline">
       <span class="logo-mark" aria-label="rgjny">
-        {'rgjny'.split('').map((ch, i) => (
-          <span class="name-letter" style={`--i: ${i}`} aria-hidden="true">{ch}</span>
-        ))}
+        {
+          'rgjny'.split('').map((ch, i) => (
+            <span class="name-letter" style={`--i: ${i}`} aria-hidden="true">
+              {ch}
+            </span>
+          ))
+        }
         <span class="logo-dot" style="--i: 5" aria-hidden="true">.</span>
       </span>
       <span class="logo-sub">security journal</span>
@@ -21,23 +25,31 @@ const currentPath = Astro.url.pathname
 
     <nav aria-label="Primary navigation" class="desktop-nav">
       <ul>
-        {siteConfig.navLinks.map((link) => {
-          const isActive = currentPath === link.url || (link.url !== '/' && currentPath.startsWith(link.url))
-          return (
-            <li>
-              <a
-                href={link.url}
-                class:list={['nav-item', isActive && 'nav-active']}
-                target={link.external ? '_blank' : undefined}
-                rel={link.external ? 'noopener noreferrer' : undefined}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                {link.name}
-                {link.external && <span class="ext-icon" aria-hidden="true">↗</span>}
-              </a>
-            </li>
-          )
-        })}
+        {
+          siteConfig.navLinks.map((link) => {
+            const isActive =
+              currentPath === link.url ||
+              (link.url !== '/' && currentPath.startsWith(link.url))
+            return (
+              <li>
+                <a
+                  href={link.url}
+                  class:list={['nav-item', isActive && 'nav-active']}
+                  target={link.external ? '_blank' : undefined}
+                  rel={link.external ? 'noopener noreferrer' : undefined}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  {link.name}
+                  {link.external && (
+                    <span class="ext-icon" aria-hidden="true">
+                      ↗
+                    </span>
+                  )}
+                </a>
+              </li>
+            )
+          })
+        }
       </ul>
     </nav>
 
@@ -52,17 +64,43 @@ const currentPath = Astro.url.pathname
         title="Toggle dark / light mode"
       >
         <!-- Crescent - shown in light mode (click → dark) -->
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path d="M20.5 14.2A8.3 8.3 0 1 1 9.8 3.5a6.6 6.6 0 0 0 10.7 10.7Z"
-            fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-          <circle cx="15.5" cy="7" r="0.9" fill="currentColor"/>
-          <circle cx="18.5" cy="10.5" r="0.55" fill="currentColor"/>
+        <svg
+          class="icon-moon"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <path
+            d="M20.5 14.2A8.3 8.3 0 1 1 9.8 3.5a6.6 6.6 0 0 0 10.7 10.7Z"
+            fill="currentColor"
+            fill-opacity="0.12"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linejoin="round"></path>
+          <circle cx="15.5" cy="7" r="0.9" fill="currentColor"></circle>
+          <circle cx="18.5" cy="10.5" r="0.55" fill="currentColor"></circle>
         </svg>
         <!-- Sun - shown in dark mode (click → light) -->
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <circle cx="12" cy="12" r="4.2" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1.6"/>
+        <svg
+          class="icon-sun"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="4.2"
+            fill="currentColor"
+            fill-opacity="0.12"
+            stroke="currentColor"
+            stroke-width="1.6"></circle>
           <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
-            <path d="M12 2.6v2.4M12 19v2.4M2.6 12h2.4M19 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M18.7 5.3 17 7M7 17l-1.7 1.7"/>
+            <path
+              d="M12 2.6v2.4M12 19v2.4M2.6 12h2.4M19 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M18.7 5.3 17 7M7 17l-1.7 1.7"
+            ></path>
           </g>
         </svg>
       </button>
@@ -72,24 +110,24 @@ const currentPath = Astro.url.pathname
         <button
           id="nav-mobile-button"
           class="mobile-menu-btn"
-          type="button" aria-expanded="false" aria-controls="nav-menu-list"
+          type="button"
+          aria-expanded="false"
+          aria-controls="nav-menu-list"
         >
           <span>Menu</span>
         </button>
-        <ul
-          id="nav-mobile-list"
-          class="invisible mobile-dropdown"
-        >
-          {siteConfig.navLinks.map((link) => (
-            <li class="p-2" aria-expanded="false">
-              <NavLink link={link} />
-            </li>
-          ))}
+        <ul id="nav-mobile-list" class="invisible mobile-dropdown">
+          {
+            siteConfig.navLinks.map((link) => (
+              <li aria-expanded="false">
+                <NavLink link={link} />
+              </li>
+            ))
+          }
         </ul>
       </nav>
     </div>
   </div>
-
 </header>
 
 <script>
@@ -109,28 +147,48 @@ const currentPath = Astro.url.pathname
     const html = document.documentElement
     const btn = document.getElementById('theme-toggle-btn')
 
-    btn?.addEventListener('click', () => {
-      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
-      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      if (!(document as any).startViewTransition || reduce) {
-        applyTheme(next)
-        return
-      }
-      // Circular reveal — the new theme expands out of the toggle button.
-      html.classList.add('theme-switching', 'theme-reveal')
-      const transition = (document as any).startViewTransition(() => applyTheme(next))
-      transition.ready.then(() => {
-        const b = btn!.getBoundingClientRect()
-        const x = b.left + b.width / 2
-        const y = b.top + b.height / 2
-        const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
-        document.documentElement.animate(
-          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
-          { duration: 550, easing: 'cubic-bezier(.22,1,.36,1)', pseudoElement: '::view-transition-new(root)' }
+    btn?.addEventListener(
+      'click',
+      () => {
+        const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        if (!(document as any).startViewTransition || reduce) {
+          applyTheme(next)
+          return
+        }
+        // Circular reveal — the new theme expands out of the toggle button.
+        html.classList.add('theme-switching', 'theme-reveal')
+        const transition = (document as any).startViewTransition(() => applyTheme(next))
+        transition.ready
+          .then(() => {
+            const b = btn!.getBoundingClientRect()
+            const x = b.left + b.width / 2
+            const y = b.top + b.height / 2
+            const radius = Math.hypot(
+              Math.max(x, window.innerWidth - x),
+              Math.max(y, window.innerHeight - y),
+            )
+            document.documentElement.animate(
+              {
+                clipPath: [
+                  `circle(0px at ${x}px ${y}px)`,
+                  `circle(${radius}px at ${x}px ${y}px)`,
+                ],
+              },
+              {
+                duration: 550,
+                easing: 'cubic-bezier(.22,1,.36,1)',
+                pseudoElement: '::view-transition-new(root)',
+              },
+            )
+          })
+          .catch(() => {})
+        transition.finished.finally(() =>
+          html.classList.remove('theme-switching', 'theme-reveal'),
         )
-      }).catch(() => {})
-      transition.finished.finally(() => html.classList.remove('theme-switching', 'theme-reveal'))
-    }, { signal })
+      },
+      { signal },
+    )
 
     const navMobileButton = document.getElementById('nav-mobile-button')
     const navMobileList = document.getElementById('nav-mobile-list')
@@ -144,19 +202,36 @@ const currentPath = Astro.url.pathname
         navMobileList?.classList.toggle('invisible', !open)
       }
       navMobileButton?.setAttribute('aria-expanded', open ? 'true' : 'false')
-      navMobileListItems?.forEach((li) => li.setAttribute('aria-expanded', open ? 'true' : 'false'))
+      navMobileListItems?.forEach((li) =>
+        li.setAttribute('aria-expanded', open ? 'true' : 'false'),
+      )
     }
     navMobileButton?.addEventListener('click', () => toggle('toggle'), { signal })
 
-    document.addEventListener('click', (event) => {
-      if (!document.getElementById('nav-mobile')?.contains(event.target as Node)) toggle('off')
-    }, { signal })
+    navMobileList?.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => toggle('off'), { signal })
+    })
 
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') toggle('off')
-    }, { signal })
+    document.addEventListener(
+      'click',
+      (event) => {
+        if (!document.getElementById('nav-mobile')?.contains(event.target as Node))
+          toggle('off')
+      },
+      { signal },
+    )
+
+    document.addEventListener(
+      'keydown',
+      (event) => {
+        if (event.key === 'Escape') toggle('off')
+      },
+      { signal },
+    )
   }
 
   document.addEventListener('astro:page-load', initHeader)
-  document.addEventListener('astro:before-swap', () => headerWindow.headerController?.abort())
+  document.addEventListener('astro:before-swap', () =>
+    headerWindow.headerController?.abort(),
+  )
 </script>

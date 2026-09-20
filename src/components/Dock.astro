@@ -10,29 +10,67 @@ const isAbout = path.startsWith('/about')
 
 <div class="dock-wrap">
   <nav class="dock" aria-label="Quick dock">
-    <a href="/" class:list={['dock-btn', isHome && 'is-active']} title="Home" aria-label="Home">
+    <a
+      href="/"
+      class:list={['dock-btn', isHome && 'is-active']}
+      title="Home"
+      aria-label="Home"
+    >
       <Icon name="home" />
     </a>
-    <a href="/posts" class:list={['dock-btn', isPosts && 'is-active']} title="Posts" aria-label="Posts">
+    <a
+      href="/posts"
+      class:list={['dock-btn', isPosts && 'is-active']}
+      title="Posts"
+      aria-label="Posts"
+    >
       <Icon name="pen" />
     </a>
-    <a href="/about" class:list={['dock-btn', isAbout && 'is-active']} title="About" aria-label="About">
+    <a
+      href="/about"
+      class:list={['dock-btn', isAbout && 'is-active']}
+      title="About"
+      aria-label="About"
+    >
       <Icon name="face" />
     </a>
     <span class="dock-sep" aria-hidden="true"></span>
-    {siteConfig.socialLinks?.github && (
-      <a href={siteConfig.socialLinks.github} target="_blank" rel="noopener noreferrer" class="dock-btn" title="GitHub" aria-label="GitHub">
-        <Icon name="github" />
-      </a>
-    )}
-    {siteConfig.socialLinks?.email && (
-      <a href={`mailto:${siteConfig.socialLinks.email}`} class="dock-btn" title="Email" aria-label="Email">
-        <Icon name="mail" />
-      </a>
-    )}
+    {
+      siteConfig.socialLinks?.github && (
+        <a
+          href={siteConfig.socialLinks.github}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="dock-btn"
+          title="GitHub"
+          aria-label="GitHub"
+        >
+          <Icon name="github" />
+        </a>
+      )
+    }
+    {
+      siteConfig.socialLinks?.email && (
+        <a
+          href={`mailto:${siteConfig.socialLinks.email}`}
+          class="dock-btn"
+          title="Email"
+          aria-label="Email"
+        >
+          <Icon name="mail" />
+        </a>
+      )
+    }
     <span class="dock-sep" aria-hidden="true"></span>
-    <button id="dock-theme-btn" class="dock-btn" type="button" title="Toggle theme" aria-label="Toggle theme">
-      <Icon name="sun" />
+    <button
+      id="dock-theme-btn"
+      class="dock-btn dock-theme-toggle"
+      type="button"
+      title="Toggle theme"
+      aria-label="Toggle theme"
+    >
+      <span class="dock-icon-sun"><Icon name="sun" /></span>
+      <span class="dock-icon-moon"><Icon name="moon" /></span>
     </button>
   </nav>
 </div>
@@ -53,16 +91,30 @@ const isAbout = path.startsWith('/about')
       // Circular reveal — the new theme expands out of the dock button.
       html.classList.add('theme-switching', 'theme-reveal')
       const t = (document as any).startViewTransition(apply)
-      t.ready.then(() => {
-        const b = btn!.getBoundingClientRect()
-        const x = b.left + b.width / 2
-        const y = b.top + b.height / 2
-        const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
-        document.documentElement.animate(
-          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
-          { duration: 550, easing: 'cubic-bezier(.22,1,.36,1)', pseudoElement: '::view-transition-new(root)' }
-        )
-      }).catch(() => {})
+      t.ready
+        .then(() => {
+          const b = btn!.getBoundingClientRect()
+          const x = b.left + b.width / 2
+          const y = b.top + b.height / 2
+          const radius = Math.hypot(
+            Math.max(x, window.innerWidth - x),
+            Math.max(y, window.innerHeight - y),
+          )
+          document.documentElement.animate(
+            {
+              clipPath: [
+                `circle(0px at ${x}px ${y}px)`,
+                `circle(${radius}px at ${x}px ${y}px)`,
+              ],
+            },
+            {
+              duration: 550,
+              easing: 'cubic-bezier(.22,1,.36,1)',
+              pseudoElement: '::view-transition-new(root)',
+            },
+          )
+        })
+        .catch(() => {})
       t.finished.finally(() => html.classList.remove('theme-switching', 'theme-reveal'))
     })
   }

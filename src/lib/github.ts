@@ -15,7 +15,9 @@ async function load(username: string): Promise<GitHubCardData> {
   const out: GitHubCardData = { total: null, followers: null, weeks: [] }
 
   try {
-    const res = await fetch(`https://github-contributions-api.jogruber.de/v4/${username}?y=last`)
+    const res = await fetch(
+      `https://github-contributions-api.jogruber.de/v4/${username}?y=last`,
+    )
     if (res.ok) {
       const data = (await res.json()) as {
         total?: Record<string, number>

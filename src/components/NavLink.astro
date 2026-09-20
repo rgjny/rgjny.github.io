@@ -6,7 +6,9 @@ interface Props {
 }
 
 const { link } = Astro.props
-const isActive = Astro.url.pathname === link.url || (link.url !== '/' && Astro.url.pathname.startsWith(link.url))
+const isActive =
+  Astro.url.pathname === link.url ||
+  (link.url !== '/' && Astro.url.pathname.startsWith(link.url))
 ---
 
 <a

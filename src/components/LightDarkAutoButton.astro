@@ -3,9 +3,7 @@
   const darkThemeId = 'dark'
 
   const getSystemTheme = () =>
-    window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? darkThemeId
-      : lightThemeId
+    window.matchMedia('(prefers-color-scheme: dark)').matches ? darkThemeId : lightThemeId
 
   const applyTheme = (theme) => {
     if (theme === 'auto') {

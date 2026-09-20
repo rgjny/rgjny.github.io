@@ -18,9 +18,14 @@ const tw = siteConfig.socialLinks?.twitter
 
 // Quick-link trio: icon, label, count
 const trio = [
-  { icon: 'pen',    name: 'Writing', meta: `${postCount} ${postCount === 1 ? 'post' : 'posts'}`, href: '/posts' },
-  { icon: 'face',   name: 'About',   meta: 'who I am',    href: '/about' },
-  { icon: 'github', name: 'GitHub',  meta: '@rgjny',      href: gh ?? '#', external: true },
+  {
+    icon: 'pen',
+    name: 'Writing',
+    meta: `${postCount} ${postCount === 1 ? 'post' : 'posts'}`,
+    href: '/posts',
+  },
+  { icon: 'face', name: 'About', meta: 'who I am', href: '/about' },
+  { icon: 'github', name: 'GitHub', meta: '@rgjny', href: gh ?? '#', external: true },
 ] as const
 ---
 
@@ -28,63 +33,104 @@ const trio = [
   <div class="plate">
     <div class="plate-main">
       <h1 class="hero-name" aria-label="rgjny">
-        {'rgjny'.split('').map((ch, i) => (
-          <span class="name-letter" style={`--i: ${i}`} aria-hidden="true">{ch}</span>
-        ))}
+        {
+          'rgjny'.split('').map((ch, i) => (
+            <span class="name-letter" style={`--i: ${i}`} aria-hidden="true">
+              {ch}
+            </span>
+          ))
+        }
         <span class="hero-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
       </h1>
 
       <div class="hero-bio">
         <p class="fade-up" style="--d:.06s">
-          I <span class="inline-phrase"><span class="inline-word">hunt</span> <span class="inline-word">bugs</span><InlineMark name="bug" /></span>
-          for a living. The interesting ones aren't the loud ones — they're the <span class="inline-phrase"><span class="inline-word">quiet</span> <span class="inline-word">broken</span> <span class="inline-word">thing</span><InlineMark name="search" /></span>
+          I <span class="inline-phrase"
+            ><span class="inline-word">hunt</span>
+            <span class="inline-word">bugs</span><InlineMark name="bug" /></span
+          >
+          for a living. The interesting ones aren't the loud ones — they're the <span
+            class="inline-phrase"
+            ><span class="inline-word">quiet</span>
+            <span class="inline-word">broken</span>
+            <span class="inline-word">thing</span><InlineMark name="search" /></span
+          >
           sitting three steps deep that nobody bothered to check.
         </p>
         <div class="hero-slot fade-up" style="--d:.14s"><slot /></div>
         <p class="fade-up" style="--d:.22s">
           Find me at
-          {gh && (<><a href={gh} target="_blank" rel="noopener noreferrer">GitHub<Icon name="ext" class="ext-mark" /></a>{(tw || email) ? ', ' : ''}</>)}
-          {tw && (<><a href={tw} target="_blank" rel="noopener noreferrer">@rgjny_<Icon name="ext" class="ext-mark" /></a>{email ? ' and ' : ''}</>)}
-          {email && (<a href={`mailto:${email}`}>{email}</a>)}
+          {
+            gh && (
+              <>
+                <a href={gh} target="_blank" rel="noopener noreferrer">
+                  GitHub
+                  <Icon name="ext" class="ext-mark" />
+                </a>
+                {tw || email ? ', ' : ''}
+              </>
+            )
+          }
+          {
+            tw && (
+              <>
+                <a href={tw} target="_blank" rel="noopener noreferrer">
+                  @rgjny_
+                  <Icon name="ext" class="ext-mark" />
+                </a>
+                {email ? ' and ' : ''}
+              </>
+            )
+          }
+          {email && <a href={`mailto:${email}`}>{email}</a>}
         </p>
       </div>
     </div>
 
-    {avatarImage && (
-      <figure class="hero-portrait fade-up" style="--d:.12s">
-        <div class="portrait-frame" data-halftone-avatar>
-          <Image
-            src={avatarImage.src}
-            alt={avatarImage.alt}
-            class="portrait-src"
-            widths={[240, 480]}
-            sizes="240px"
-            height={480}
-            width={480}
-          />
-          <canvas class="portrait-halftone" aria-hidden="true"></canvas>
-        </div>
-      </figure>
-    )}
+    {
+      avatarImage && (
+        <figure class="hero-portrait fade-up" style="--d:.12s">
+          <div class="portrait-frame" data-halftone-avatar>
+            <Image
+              src={avatarImage.src}
+              alt={avatarImage.alt}
+              class="portrait-src"
+              widths={[240, 480]}
+              sizes="240px"
+              height={480}
+              width={480}
+            />
+            <canvas class="portrait-halftone" aria-hidden="true" />
+          </div>
+        </figure>
+      )
+    }
   </div>
 </section>
 
 <nav class="trio" aria-label="Quick links">
-  {trio.map((t, i) => (
-    <a
-      class="trio-item scroll-reveal"
-      style={`--reveal-delay: ${i * 70}ms`}
-      href={t.href}
-      target={t.external ? '_blank' : undefined}
-      rel={t.external ? 'noopener noreferrer' : undefined}
-    >
-      <span class="trio-icon"><Icon name={t.icon} /></span>
-      <span class="trio-text">
-        <span class="trio-name">{t.name}{t.external && <Icon name="ext" class="ext-mark" />}</span>
-        <span class="trio-meta">{t.meta}</span>
-      </span>
-    </a>
-  ))}
+  {
+    trio.map((t, i) => (
+      <a
+        class="trio-item scroll-reveal"
+        style={`--reveal-delay: ${i * 70}ms`}
+        href={t.href}
+        target={t.external ? '_blank' : undefined}
+        rel={t.external ? 'noopener noreferrer' : undefined}
+      >
+        <span class="trio-icon">
+          <Icon name={t.icon} />
+        </span>
+        <span class="trio-text">
+          <span class="trio-name">
+            {t.name}
+            {t.external && <Icon name="ext" class="ext-mark" />}
+          </span>
+          <span class="trio-meta">{t.meta}</span>
+        </span>
+      </a>
+    ))
+  }
 </nav>
 
 <script>
@@ -107,13 +153,16 @@ const trio = [
     }
 
     document.documentElement.classList.add('home-motion-ready')
-    homeMotionWindow.homeRevealObserver = new IntersectionObserver((entries, observer) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting && entry.boundingClientRect.top >= 0) return
-        entry.target.classList.add('is-visible')
-        observer.unobserve(entry.target)
-      })
-    }, { threshold: 0.14, rootMargin: '0px 0px -5% 0px' })
+    homeMotionWindow.homeRevealObserver = new IntersectionObserver(
+      (entries, observer) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting && entry.boundingClientRect.top >= 0) return
+          entry.target.classList.add('is-visible')
+          observer.unobserve(entry.target)
+        })
+      },
+      { threshold: 0.14, rootMargin: '0px 0px -5% 0px' },
+    )
 
     items.forEach((item) => homeMotionWindow.homeRevealObserver?.observe(item))
   }
@@ -137,7 +186,10 @@ const trio = [
 
     const draw = () => {
       frame.classList.add('halftone-ready')
-      if (reduce) { staticDither(canvas, img, ink(), 4, false); return }
+      if (reduce) {
+        staticDither(canvas, img, ink(), 4, false)
+        return
+      }
       animateDither(canvas, img, ink(), { cell: 4, duration: 1100, invert: false })
     }
     if (img.complete && img.naturalWidth) draw()
@@ -153,7 +205,10 @@ const trio = [
         if (img.complete && img.naturalWidth) staticDither(canvas, img, ink(), 4, false)
       })
     })
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    obs.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    })
     homeMotionWindow.homePortraitThemeObs = obs
 
     // Keep the canvas buffer matched to the laid-out frame — a stale buffer
@@ -171,7 +226,10 @@ const trio = [
     homeMotionWindow.homePortraitResizeObs = resizeObs
   }
 
-  function initHome() { initHomeReveals(); initHalftoneAvatar() }
+  function initHome() {
+    initHomeReveals()
+    initHalftoneAvatar()
+  }
   document.addEventListener('astro:page-load', initHome)
   document.addEventListener('astro:before-swap', () => {
     homeMotionWindow.homeRevealObserver?.disconnect()

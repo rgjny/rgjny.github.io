@@ -4,9 +4,10 @@ import IconChevronUp from '~/icons/chevron-up.svg'
 
 <button
   hidden
-  class="scroll-up size-11 fixed flex items-center justify-center bg-background z-100 bottom-3 right-3 rounded-full border-2 border-accent/20 hover:bg-accent/10 md:size-12 md:bottom-5 md:right-5 lg:size-13 lg:bottom-6 lg:right-6"
+  class="scroll-up size-11 fixed flex items-center justify-center bg-background z-100 right-4 bottom-[calc(5.2rem+env(safe-area-inset-bottom,0px))] md:bottom-6 md:right-6 md:size-12 rounded-full border-2 border-accent/20 hover:bg-accent/10 shadow-lg touch-manipulation min-w-[44px] min-h-[44px]"
+  aria-label="Scroll to top"
 >
-  <IconChevronUp class="text-accent/50 size-8 lg:size-9" />
+  <IconChevronUp class="text-accent/50 size-7 lg:size-8" />
 </button>
 
 <script>
@@ -36,27 +37,25 @@ import IconChevronUp from '~/icons/chevron-up.svg'
     }
   }
 
+  const scrollWin = window as Window & { scrollUpObserver?: IntersectionObserver }
+
   function init() {
+    scrollWin.scrollUpObserver?.disconnect()
     const button = document.querySelector('button.scroll-up') as HTMLButtonElement
     const topHeading = document.querySelector('h1')
     const topOffset = topHeading ? topHeading.offsetTop : 0
-    if (!button) {
-      console.warn('Scroll up button not found in the document.')
-      return
-    }
+    if (!button) return
+
     button.addEventListener('click', () => {
       window.scrollTo({ top: topOffset, behavior: 'smooth' })
     })
-    // Use IntersectionObserver to show/hide the button
+
     const prose = document.querySelector('article div.prose')
-    if (!prose) {
-      console.warn('Prose element not found in the article.')
-      return
-    }
+    if (!prose) return
 
     const btnControl = transitionHiddenElement(button, 'opacity', 'active')
 
-    const observer = new IntersectionObserver(
+    scrollWin.scrollUpObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
@@ -66,13 +65,15 @@ import IconChevronUp from '~/icons/chevron-up.svg'
           }
         })
       },
-      // Only consider the top 5% of the viewport
       { rootMargin: `0px 0px -95% 0px` },
     )
-    observer.observe(prose)
+    scrollWin.scrollUpObserver.observe(prose)
   }
 
-  init()
+  document.addEventListener('astro:page-load', init)
+  document.addEventListener('astro:before-swap', () =>
+    scrollWin.scrollUpObserver?.disconnect(),
+  )
 </script>
 
 <style>

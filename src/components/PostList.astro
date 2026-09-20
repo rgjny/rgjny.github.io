@@ -17,34 +17,36 @@ function shortDate(d: Date) {
 ---
 
 <ul class="wr-list">
-  {posts.map((post) => (
-    <li>
-      <a class="wr-row" href={`/posts/${post.id}`}>
-        <span class="wr-thumb" data-thumb>
-          {post.data.coverImage ? (
-            <>
-              <canvas class="wr-dither" aria-hidden="true"></canvas>
-              <Image
-                class="wr-photo"
-                src={post.data.coverImage.src}
-                alt=""
-                widths={[480, 960]}
-                sizes="(max-width: 640px) 100vw, 96px"
-                loading="lazy"
-              />
-            </>
-          ) : (
-            <GenArt seed={post.id} variant="halftone" ratio={1.5} />
-          )}
-        </span>
-        <span class="wr-line">
-          <span class="wr-title">{post.data.title}</span>
-          <span class="wr-leader" aria-hidden="true"></span>
-          <time class="wr-date mono">{shortDate(post.data.published)}</time>
-        </span>
-      </a>
-    </li>
-  ))}
+  {
+    posts.map((post) => (
+      <li>
+        <a class="wr-row" href={`/posts/${post.id}`}>
+          <span class="wr-thumb" data-thumb>
+            {post.data.coverImage ? (
+              <>
+                <canvas class="wr-dither" aria-hidden="true" />
+                <Image
+                  class="wr-photo"
+                  src={post.data.coverImage.src}
+                  alt=""
+                  widths={[480, 960]}
+                  sizes="(max-width: 640px) 100vw, 96px"
+                  loading="lazy"
+                />
+              </>
+            ) : (
+              <GenArt seed={post.id} variant="halftone" ratio={1.5} />
+            )}
+          </span>
+          <span class="wr-line">
+            <span class="wr-title">{post.data.title}</span>
+            <span class="wr-leader" aria-hidden="true" />
+            <time class="wr-date mono">{shortDate(post.data.published)}</time>
+          </span>
+        </a>
+      </li>
+    ))
+  }
 </ul>
 
 <script>
@@ -63,7 +65,9 @@ function shortDate(d: Date) {
         getComputedStyle(thumb).getPropertyValue('--text').trim() ||
         getComputedStyle(thumb).color.trim() ||
         '#26221c'
-      const render = () => { if (staticDither(canvas, img, ink, 3)) thumb.classList.add('thumb-ready') }
+      const render = () => {
+        if (staticDither(canvas, img, ink, 3)) thumb.classList.add('thumb-ready')
+      }
       if (img.complete && img.naturalWidth) render()
       else img.addEventListener('load', render, { once: true })
     })
@@ -76,9 +80,14 @@ function shortDate(d: Date) {
     // tick as the attribute change returns the previous theme's ink.
     thumbWin.wrThumbThemeObs?.disconnect()
     const obs = new MutationObserver(() => requestAnimationFrame(renderThumbs))
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    obs.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    })
     thumbWin.wrThumbThemeObs = obs
   }
   document.addEventListener('astro:page-load', initThumbs)
-  document.addEventListener('astro:before-swap', () => thumbWin.wrThumbThemeObs?.disconnect())
+  document.addEventListener('astro:before-swap', () =>
+    thumbWin.wrThumbThemeObs?.disconnect(),
+  )
 </script>

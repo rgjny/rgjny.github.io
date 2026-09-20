@@ -18,16 +18,22 @@ const { trailingSlashes = false } = Astro.props
   </button>
   <dialog
     aria-label="search"
-    class="text-foreground! bg-background max-h-5/6 min-h-48 w-7/8 sm:w-5/6 max-w-xl border-double! border-4 border-accent/30 shadow-sm backdrop:backdrop-blur-sm open:flex mx-auto mt-10 sm:mt-16 mb-auto rounded-xl"
+    class="text-foreground! bg-background max-h-[85dvh] min-h-48 w-[calc(100%-1.5rem)] sm:w-5/6 max-w-xl border-double! border-4 border-accent/30 shadow-sm backdrop:backdrop-blur-sm open:flex mx-auto mt-8 sm:mt-16 mb-auto rounded-xl overflow-hidden p-0"
   >
-    <div class="dialog-frame flex grow flex-col gap-4 p-6 pt-6 max-w-full">
-      <button class="cursor-pointer fixed top-2 right-2 rounded-full" data-close-modal>
-        <IconCircleX class="size-6 text-accent/50" />
+    <div
+      class="dialog-frame relative flex grow flex-col gap-4 p-4 sm:p-6 pt-12 sm:pt-6 max-w-full overflow-y-auto"
+    >
+      <button
+        class="cursor-pointer absolute top-2.5 right-2.5 p-2 rounded-full flex items-center justify-center min-w-[44px] min-h-[44px] touch-manipulation hover:bg-accent/10"
+        data-close-modal
+        aria-label="Close search"
+      >
+        <IconCircleX class="size-6 text-accent/70" />
       </button>
       {
         import.meta.env.DEV ? (
-          <div class="mx-auto text-center">
-            <p>
+          <div class="mx-auto text-center py-4">
+            <p class="text-sm sm:text-base">
               Search is only available in production builds. <br />
               Try building and previewing the site to test it out locally.
             </p>
@@ -52,11 +58,16 @@ const { trailingSlashes = false } = Astro.props
     --pagefind-ui-border-width: 2px;
   }
 
+  .pagefind-ui__search-input {
+    font-size: 1rem !important; /* 16px minimum prevents iOS Safari zoom on focus */
+  }
+
   .pagefind-ui__results-area {
     margin: 16px 0;
   }
   .pagefind-ui__result {
-    overflow-x: scroll !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   .pagefind-ui__result-inner {

@@ -129,23 +129,29 @@ let generatedCss: string = cssLines.join('\n')
   <head>
     <!-- Anti-flash theme init - must be first in <head> -->
     <script is:inline>
-      (function() {
-        var saved = localStorage.getItem('theme');
-        document.documentElement.setAttribute('data-theme', saved || 'dark');
-      })();
+      ;(function () {
+        var saved = localStorage.getItem('theme')
+        document.documentElement.setAttribute('data-theme', saved || 'dark')
+      })()
     </script>
     <!-- Name entrance: play once per full page load, then release (hover takes over) -->
     <script is:inline>
-      (function() {
-        document.documentElement.classList.add('name-enter');
-        setTimeout(function() {
-          document.documentElement.classList.remove('name-enter');
-        }, 1600);
-      })();
+      ;(function () {
+        document.documentElement.classList.add('name-enter')
+        setTimeout(function () {
+          document.documentElement.classList.remove('name-enter')
+        }, 1600)
+      })()
     </script>
     <meta charset="UTF-8" />
-    <meta name="google-site-verification" content="o1KzQeMtZ4oJ75LAuGGuLdu7-OS7By5xO5C-qB-t3RI" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta
+      name="google-site-verification"
+      content="o1KzQeMtZ4oJ75LAuGGuLdu7-OS7By5xO5C-qB-t3RI"
+    />
+    <meta
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+      name="viewport"
+    />
     <meta name="generator" content={Astro.generator} />
     <meta name="title" content={pageTitle} />
     <meta name="description" content={pageDescription} />

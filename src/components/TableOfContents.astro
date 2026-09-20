@@ -11,10 +11,25 @@ const { headings } = Astro.props
 const filteredHeadings = headings.filter(({ depth }) => depth >= 2 && depth <= 3)
 ---
 
-<details open class="toc" id="toc">
+<details class="toc" id="toc">
   <summary class="toc-summary">
-    <a class="toc-back" href="/posts">↩ Writing</a>
-    <span class="toc-caret" aria-hidden="true">On this page</span>
+    <div class="toc-summary-left">
+      <span class="toc-badge">TOC</span>
+      <span class="toc-caret">On this page</span>
+      <svg
+        class="toc-chevron"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="m6 9 6 6 6-6"></path>
+      </svg>
+    </div>
+    <a class="toc-back" href="/posts" onclick="event.stopPropagation()">↩ Writing</a>
   </summary>
   <nav class="toc-nav" aria-label="Table of contents">
     <ul class="toc-list">
@@ -30,16 +45,39 @@ const filteredHeadings = headings.filter(({ depth }) => depth >= 2 && depth <= 3
   function initTableOfContents() {
     tocWindow.tocObserver?.disconnect()
 
+    const toc = document.getElementById('toc') as HTMLDetailsElement | null
+    if (toc) {
+      // Desktop (>= 1280px) gets sticky open sidebar; mobile defaults collapsed so post starts immediately
+      if (window.innerWidth >= 1280) {
+        toc.open = true
+      } else {
+        toc.open = false
+      }
+
+      // On mobile, auto-close the drawer when tapping a section link
+      toc.querySelectorAll('.toc-link').forEach((link) => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth < 1280) {
+            toc.open = false
+          }
+        })
+      })
+    }
+
     const anchors = [...document.querySelectorAll<HTMLElement>('h2[id], h3[id]')]
     const links = [...document.querySelectorAll<HTMLElement>('.toc-list > li')]
 
     const topBtn = document.querySelector<HTMLButtonElement>('.toc-top')
-    topBtn?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }))
+    topBtn?.addEventListener('click', () =>
+      window.scrollTo({ top: 0, behavior: 'smooth' }),
+    )
 
     if (anchors.length !== links.length || anchors.length === 0) return
 
     const setActive = (index: number) => {
-      links.forEach((link, linkIndex) => link.classList.toggle('active-heading', linkIndex === index))
+      links.forEach((link, linkIndex) =>
+        link.classList.toggle('active-heading', linkIndex === index),
+      )
     }
 
     tocWindow.tocObserver = new IntersectionObserver(
@@ -56,5 +94,7 @@ const filteredHeadings = headings.filter(({ depth }) => depth >= 2 && depth <= 3
   }
 
   document.addEventListener('astro:page-load', initTableOfContents)
-  document.addEventListener('astro:before-swap', () => tocWindow.tocObserver?.disconnect())
+  document.addEventListener('astro:before-swap', () =>
+    tocWindow.tocObserver?.disconnect(),
+  )
 </script>

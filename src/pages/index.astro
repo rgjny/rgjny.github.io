@@ -22,7 +22,9 @@ if (home.length > 0) {
 }
 
 const sortedPosts = await getSortedPosts()
-const postsHaveTags = sortedPosts.some((post) => post.data.tags && post.data.tags.length > 0)
+const postsHaveTags = sortedPosts.some(
+  (post) => post.data.tags && post.data.tags.length > 0,
+)
 const postsHaveSeries = sortedPosts.some((post) => post.data.series)
 
 // Sequential section numbers for whichever sections actually render.
@@ -34,40 +36,57 @@ const indexNum = postsHaveTags ? pad() : undefined
 ---
 
 <Layout>
-  {HomeContent && (
-    <HomeBanner avatarImage={homeAvatarImage} githubCalendar={homeGithubCalendar} postCount={sortedPosts.length}>
-      <HomeContent />
-    </HomeBanner>
-  )}
-  {sortedPosts.length > 0 && (
-    <section class="home-writing">
-      <div class="block-header-wrapper">
-        <div class="block-header-title">
-          <span class="block-header-num">{writingNum}</span>
-          <span class="block-header-hatch" aria-hidden="true"></span>
-          <span class="block-header-label">Writing</span>
-          <span class="block-header-line"></span>
-          <a class="block-header-more" href="/posts">View all<Icon name="ext" class="ext-mark" /></a>
+  {
+    HomeContent && (
+      <HomeBanner
+        avatarImage={homeAvatarImage}
+        githubCalendar={homeGithubCalendar}
+        postCount={sortedPosts.length}
+      >
+        <HomeContent />
+      </HomeBanner>
+    )
+  }
+  {
+    sortedPosts.length > 0 && (
+      <section class="home-writing">
+        <div class="block-header-wrapper">
+          <div class="block-header-title">
+            <span class="block-header-num">{writingNum}</span>
+            <span class="block-header-hatch" aria-hidden="true" />
+            <span class="block-header-label">Writing</span>
+            <span class="block-header-line" />
+            <a class="block-header-more" href="/posts">
+              View all
+              <Icon name="ext" class="ext-mark" />
+            </a>
+          </div>
         </div>
-      </div>
-      <PostList posts={sortedPosts.slice().reverse().slice(0, 5)} />
-    </section>
-  )}
-  {postsHaveSeries && (
-    <section class="home-collections">
-      <BlockHeader num={collectionsNum}>Collections</BlockHeader>
-      <SeriesSection posts={sortedPosts} />
-    </section>
-  )}
-  {postsHaveTags && (
-    <section class="home-index">
-      <BlockHeader num={indexNum}>Index</BlockHeader>
-      <TagsSection posts={sortedPosts} />
-    </section>
-  )}
+        <PostList posts={sortedPosts.slice().reverse().slice(0, 5)} />
+      </section>
+    )
+  }
+  {
+    postsHaveSeries && (
+      <section class="home-collections">
+        <BlockHeader num={collectionsNum}>Collections</BlockHeader>
+        <SeriesSection posts={sortedPosts} />
+      </section>
+    )
+  }
+  {
+    postsHaveTags && (
+      <section class="home-index">
+        <BlockHeader num={indexNum}>Index</BlockHeader>
+        <TagsSection posts={sortedPosts} />
+      </section>
+    )
+  }
 </Layout>
 
 <style is:global>
   /* Hide heading anchors on home page */
-  a.heading-anchor { display: none !important; }
+  a.heading-anchor {
+    display: none !important;
+  }
 </style>

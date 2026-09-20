@@ -17,7 +17,10 @@ const { seed, no, date, minutes, words, cover, coverAlt } = Astro.props
 // seeded decorative glyph strip (the little mono run under the art)
 function hash(str: string): number {
   let h = 1779033703 ^ str.length
-  for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19) }
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353)
+    h = (h << 13) | (h >>> 19)
+  }
   return (h ^ (h >>> 16)) >>> 0
 }
 const glyphs = '·¡⌐¬…∴∷⁘⁙‥∙°'.split('')
@@ -33,24 +36,45 @@ const mode = cover ? 'image' : 'art'
 
 <figure class="post-banner" data-mode={mode} data-view="image" data-variant="halftone">
   <div class="post-banner-art">
-    {cover ? (
-      <>
-        <Image
-          priority
-          src={cover}
-          alt={coverAlt || ''}
-          class="pb-cover"
-          widths={[640, 960, 1280, 1536]}
-          sizes="(min-width: 768px) 44rem, 100vw"
-        />
-        <canvas class="pb-dither" aria-hidden="true"></canvas>
-      </>
-    ) : (
-      <GenArt seed={seed} both ratio={2.4} />
-    )}
-    <button class="post-banner-toggle" type="button" aria-label="Toggle banner view" title="Toggle banner view">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="8" height="16" rx="1.5"/><rect x="13" y="4" width="8" height="16" rx="1.5"/>
+    {
+      cover ? (
+        <>
+          <Image
+            priority
+            src={cover}
+            alt={coverAlt || ''}
+            class="pb-cover"
+            widths={[640, 960, 1280, 1536]}
+            sizes="(min-width: 768px) 44rem, 100vw"
+          />
+          <canvas class="pb-dither" aria-hidden="true" />
+        </>
+      ) : (
+        <GenArt seed={seed} both ratio={2.4} />
+      )
+    }
+    <button
+      class="post-banner-toggle"
+      type="button"
+      aria-label="Toggle banner view"
+      title="Toggle banner view"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="16"
+        height="16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="3" y="4" width="8" height="16" rx="1.5"></rect><rect
+          x="13"
+          y="4"
+          width="8"
+          height="16"
+          rx="1.5"></rect>
       </svg>
     </button>
   </div>
@@ -58,16 +82,40 @@ const mode = cover ? 'image' : 'art'
 </figure>
 
 <dl class="post-meta-row">
-  {noStr && (
-    <div class="pm-cell"><dt>No.</dt><dd class="pm-no"><span class="pm-tick"></span>{noStr}</dd></div>
-  )}
+  {
+    noStr && (
+      <div class="pm-cell">
+        <>
+          <dt>No.</dt>
+          <dd class="pm-no">
+            <span class="pm-tick" />
+            {noStr}
+          </dd>
+        </>
+      </div>
+    )
+  }
   <div class="pm-cell"><dt>Date</dt><dd>{date}</dd></div>
-  {minutes != null && (
-    <div class="pm-cell"><dt>Length</dt><dd>{minutes} min</dd></div>
-  )}
-  {words != null && (
-    <div class="pm-cell"><dt>Words</dt><dd>{words.toLocaleString()}</dd></div>
-  )}
+  {
+    minutes != null && (
+      <div class="pm-cell">
+        <>
+          <dt>Length</dt>
+          <dd>{minutes} min</dd>
+        </>
+      </div>
+    )
+  }
+  {
+    words != null && (
+      <div class="pm-cell">
+        <>
+          <dt>Words</dt>
+          <dd>{words.toLocaleString()}</dd>
+        </>
+      </div>
+    )
+  }
 </dl>
 
 <script>
@@ -89,7 +137,9 @@ const mode = cover ? 'image' : 'art'
       // --text, not `color` — `color` is mid-transition for ~420ms after a
       // theme flip and would repaint in the previous theme's ink.
       const ink =
-        getComputedStyle(art || banner).getPropertyValue('--text').trim() ||
+        getComputedStyle(art || banner)
+          .getPropertyValue('--text')
+          .trim() ||
         getComputedStyle(art || banner).color.trim() ||
         '#26221c'
       staticDither(canvas, img, ink, 5, false)
@@ -106,7 +156,9 @@ const mode = cover ? 'image' : 'art'
       let dithered = false
 
       const inkColor = () =>
-        getComputedStyle(art || banner).getPropertyValue('--text').trim() ||
+        getComputedStyle(art || banner)
+          .getPropertyValue('--text')
+          .trim() ||
         getComputedStyle(art || banner).color.trim() ||
         '#26221c'
       const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -125,14 +177,22 @@ const mode = cover ? 'image' : 'art'
         animating = true
         animateDither(canvas, img, inkColor(), {
           duration: 1100,
-          onProgress: (t) => { if (img) img.style.opacity = String(1 - t) },
-          onDone: () => { dithered = true; animating = false },
+          onProgress: (t) => {
+            if (img) img.style.opacity = String(1 - t)
+          },
+          onDone: () => {
+            dithered = true
+            animating = false
+          },
         })
       }
 
       const toggle = () => {
         if (mode !== 'image') {
-          banner.setAttribute('data-variant', banner.getAttribute('data-variant') === 'halftone' ? 'graph' : 'halftone')
+          banner.setAttribute(
+            'data-variant',
+            banner.getAttribute('data-variant') === 'halftone' ? 'graph' : 'halftone',
+          )
           return
         }
         if (!img || !canvas || animating) return
@@ -148,10 +208,15 @@ const mode = cover ? 'image' : 'art'
         animateDither(canvas, img, inkColor(), {
           reverse: dithered,
           duration: 950,
-          onProgress: (t) => { if (img) img.style.opacity = String(1 - t) },
+          onProgress: (t) => {
+            if (img) img.style.opacity = String(1 - t)
+          },
           onDone: () => {
             dithered = !dithered
-            if (!dithered) { banner.setAttribute('data-view', 'image'); if (img) img.style.opacity = '1' }
+            if (!dithered) {
+              banner.setAttribute('data-view', 'image')
+              if (img) img.style.opacity = '1'
+            }
             animating = false
           },
         })
@@ -162,7 +227,10 @@ const mode = cover ? 'image' : 'art'
         else img?.addEventListener('load', drawInitial, { once: true })
       }
 
-      banner.querySelector('.post-banner-toggle')?.addEventListener('click', (e) => { e.stopPropagation(); toggle() })
+      banner.querySelector('.post-banner-toggle')?.addEventListener('click', (e) => {
+        e.stopPropagation()
+        toggle()
+      })
       art?.addEventListener('click', toggle)
     })
 
@@ -170,8 +238,13 @@ const mode = cover ? 'image' : 'art'
     // flush — reading the computed color in the same tick as the attribute
     // change returns the previous theme's ink.
     bannerWin.pbThemeObs?.disconnect()
-    bannerWin.pbThemeObs = new MutationObserver(() => requestAnimationFrame(repaintDithered))
-    bannerWin.pbThemeObs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    bannerWin.pbThemeObs = new MutationObserver(() =>
+      requestAnimationFrame(repaintDithered),
+    )
+    bannerWin.pbThemeObs.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    })
 
     // Keep canvas buffers matched to layout — a stale buffer gets
     // CSS-stretched and the dots bloat into a blob (rotate/resize/zoom).
@@ -181,11 +254,16 @@ const mode = cover ? 'image' : 'art'
       let changed = false
       for (const entry of entries) {
         const w = Math.round(entry.contentRect.width)
-        if (seen.get(entry.target) !== w) { seen.set(entry.target, w); changed = true }
+        if (seen.get(entry.target) !== w) {
+          seen.set(entry.target, w)
+          changed = true
+        }
       }
       if (changed) repaintDithered()
     })
-    document.querySelectorAll<HTMLElement>('.post-banner-art').forEach((art) => bannerWin.pbResizeObs?.observe(art))
+    document
+      .querySelectorAll<HTMLElement>('.post-banner-art')
+      .forEach((art) => bannerWin.pbResizeObs?.observe(art))
   }
   document.addEventListener('astro:page-load', initBanners)
   document.addEventListener('astro:before-swap', () => {

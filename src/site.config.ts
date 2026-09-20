@@ -12,9 +12,9 @@ const config: SiteConfig = {
   pageSize: 6,
   trailingSlashes: false,
   navLinks: [
-    { name: 'Home',   url: '/' },
-    { name: 'Posts',  url: '/posts' },
-    { name: 'About',  url: '/about' },
+    { name: 'Home', url: '/' },
+    { name: 'Posts', url: '/posts' },
+    { name: 'About', url: '/about' },
     { name: 'GitHub', url: 'https://github.com/rgjny', external: true },
   ],
   // Single theme - dark/light switching is handled by JS toggle in Header.astro
@@ -26,20 +26,20 @@ const config: SiteConfig = {
       'github-dark': {
         // Base palette - our CSS vars override most of this at the :root level.
         // These are only used where the theme system injects variables directly.
-        'background':        '#12100e',
+        background: '#12100e',
         'editor.background': '#12100e',
-        'foreground':        '#ece7df',
+        foreground: '#ece7df',
         'editor.foreground': '#ece7df',
-        'accent':            '#e08a5a',
-        'link':              '#e08a5a',
-        'border':            '#2c2824',
-        'muted-foreground':  '#a49a8c',
+        accent: '#e08a5a',
+        link: '#e08a5a',
+        border: '#2c2824',
+        'muted-foreground': '#a49a8c',
       },
     },
   },
   socialLinks: {
-    github:  'https://github.com/rgjny',
-    email:   'rgjnymail@proton.me',
+    github: 'https://github.com/rgjny',
+    email: 'rgjnymail@proton.me',
     twitter: 'https://x.com/rgjny_',
     rss: false,
   },

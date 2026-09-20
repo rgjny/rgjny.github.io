@@ -31,11 +31,13 @@ const articleLink = samePage ? `#${post.id}` : `/posts/${post.id}`
     </h2>
     <PostInfo post={post} class="mb-3 mt-2" />
     {description && <p class="post-desc pl-0.5 my-3 text-base/7">{description}</p>}
-    {tags && (
-      <div class="mb-4 mt-1">
-        <Tags tags={tags} />
-      </div>
-    )}
+    {
+      tags && (
+        <div class="mb-4 mt-1">
+          <Tags tags={tags} />
+        </div>
+      )
+    }
     <div>
       <a class="post-readmore" href={articleLink}>
         {samePage ? 'Keep reading' : 'Read the note'}
