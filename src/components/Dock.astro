@@ -76,8 +76,48 @@ const isAbout = path.startsWith('/about')
 </div>
 
 <script>
+  const dockWindow = window as Window & { dockScrollController?: AbortController }
+
+  function initDockScroll() {
+    dockWindow.dockScrollController?.abort()
+    dockWindow.dockScrollController = new AbortController()
+    const { signal } = dockWindow.dockScrollController
+
+    const dockWrap = document.querySelector<HTMLElement>('.dock-wrap')
+    if (!dockWrap) return
+
+    let lastY = window.scrollY
+    let ticking = false
+
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        const currentY = window.scrollY
+        const diff = currentY - lastY
+
+        // At top of page or overscrolled upwards: always show
+        if (currentY <= 20) {
+          dockWrap.classList.remove('is-hidden')
+        } else if (diff > 8 && currentY > 60) {
+          // Scrolling down: hide dock to keep content unobstructed
+          dockWrap.classList.add('is-hidden')
+        } else if (diff < -8) {
+          // Scrolling up: show dock
+          dockWrap.classList.remove('is-hidden')
+        }
+
+        lastY = currentY
+        ticking = false
+      })
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true, signal })
+  }
+
   // Reuse the header's theme logic; the dock button is a second trigger.
   function initDock() {
+    initDockScroll()
     const btn = document.getElementById('dock-theme-btn')
     const html = document.documentElement
     btn?.addEventListener('click', () => {
@@ -119,4 +159,7 @@ const isAbout = path.startsWith('/about')
     })
   }
   document.addEventListener('astro:page-load', initDock)
+  document.addEventListener('astro:before-swap', () => {
+    dockWindow.dockScrollController?.abort()
+  })
 </script>

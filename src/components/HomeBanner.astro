@@ -96,9 +96,10 @@ const trio = [
               alt={avatarImage.alt}
               class="portrait-src"
               widths={[240, 480]}
-              sizes="240px"
+              sizes="(max-width: 640px) 140px, 240px"
               height={480}
               width={480}
+              loading="eager"
             />
             <canvas class="portrait-halftone" aria-hidden="true" />
           </div>
@@ -187,22 +188,19 @@ const trio = [
     const draw = () => {
       frame.classList.add('halftone-ready')
       if (reduce) {
-        staticDither(canvas, img, ink(), 4, false)
+        staticDither(canvas, img, ink(), 3, false, 0.12)
         return
       }
-      animateDither(canvas, img, ink(), { cell: 4, duration: 1100, invert: false })
+      animateDither(canvas, img, ink(), { cell: 3, duration: 1100, invert: false, floor: 0.12 })
     }
     if (img.complete && img.naturalWidth) draw()
     else img.addEventListener('load', draw, { once: true })
 
     // Repaint (no re-animation) when the theme flips so ink tracks --text.
-    // The repaint is deferred past the style flush — reading the computed
-    // color in the same tick as the attribute change returns the *old*
-    // theme's ink and leaves the portrait invisible in the new theme.
     homeMotionWindow.homePortraitThemeObs?.disconnect()
     const obs = new MutationObserver(() => {
       requestAnimationFrame(() => {
-        if (img.complete && img.naturalWidth) staticDither(canvas, img, ink(), 4, false)
+        if (img.complete && img.naturalWidth) staticDither(canvas, img, ink(), 3, false, 0.12)
       })
     })
     obs.observe(document.documentElement, {
@@ -211,8 +209,7 @@ const trio = [
     })
     homeMotionWindow.homePortraitThemeObs = obs
 
-    // Keep the canvas buffer matched to the laid-out frame — a stale buffer
-    // gets CSS-stretched and the dots bloat into a blob (rotate/resize/zoom).
+    // Keep the canvas buffer matched to the laid-out frame
     homeMotionWindow.homePortraitResizeObs?.disconnect()
     let lastW = -1
     const resizeObs = new ResizeObserver(() => {
@@ -220,7 +217,7 @@ const trio = [
       if (w === lastW) return
       lastW = w
       if (frame.classList.contains('halftone-ready') && img.complete && img.naturalWidth)
-        staticDither(canvas, img, ink(), 4, false)
+        staticDither(canvas, img, ink(), 3, false, 0.12)
     })
     resizeObs.observe(frame)
     homeMotionWindow.homePortraitResizeObs = resizeObs

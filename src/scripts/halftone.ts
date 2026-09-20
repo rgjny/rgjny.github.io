@@ -11,42 +11,47 @@ export interface Dot {
   d: number
 } // d = seeded reveal delay 0..1
 
-function coverRect(img: HTMLImageElement, W: number, H: number) {
-  const ir = img.naturalWidth / img.naturalHeight
+function drawCover(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  W: number,
+  H: number,
+) {
+  const ir = (img.naturalWidth || 1) / (img.naturalHeight || 1)
   const tr = W / H
-  let sw: number, sh: number, sx: number, sy: number
+  let dw = W
+  let dh = H
+  let dx = 0
+  let dy = 0
   if (ir > tr) {
-    sh = img.naturalHeight
-    sw = sh * tr
-    sx = (img.naturalWidth - sw) / 2
-    sy = 0
+    dw = Math.round(H * ir)
+    dx = Math.round((W - dw) / 2)
   } else {
-    sw = img.naturalWidth
-    sh = sw / tr
-    sx = 0
-    sy = (img.naturalHeight - sh) / 2
+    dh = Math.round(W / ir)
+    dy = Math.round((H - dh) / 2)
   }
-  return { sx, sy, sw, sh }
+  ctx.drawImage(img, dx, dy, dw, dh)
 }
 
 /** Sample the image into a dot list. Returns null if the image can't be read.
  *  `invert` sizes dots by brightness instead of darkness — use for light
- *  line-art on a transparent/dark ground (renders the strokes as dots). */
+ *  line-art on a transparent/dark ground (renders the strokes as dots).
+ *  `floor` subtracts light paper/parchment background noise so only line art is dithered. */
 export function buildDots(
   img: HTMLImageElement,
   W: number,
   H: number,
   step: number,
   invert = false,
+  floor = 0.08,
 ): Dot[] | null {
   const off = document.createElement('canvas')
   off.width = W
   off.height = H
   const octx = off.getContext('2d', { willReadFrequently: true })
   if (!octx || !img.naturalWidth) return null
-  const { sx, sy, sw, sh } = coverRect(img, W, H)
   try {
-    octx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H)
+    drawCover(octx, img, W, H)
   } catch {
     return null
   }
@@ -62,11 +67,12 @@ export function buildDots(
       const i = (y * W + x) * 4
       const lum = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255
       const a = data[i + 3] / 255
-      // cap effective darkness so dense areas keep visible dot texture
-      // instead of merging into a solid ink slab
-      const v = Math.min((invert ? lum : 1 - lum) * a, 0.88)
+      // filter out light parchment / cream background noise if present
+      const rawDarkness = invert ? lum : 1 - lum
+      const darkness = Math.max(0, rawDarkness - floor) / (1 - floor)
+      const v = Math.min(darkness * a, 0.88)
       const r = v * (step * 0.62)
-      if (r < 0.35) continue
+      if (r < 0.28) continue
       // reveal delay biased by position + a little jitter → scattered pop-in
       const d = Math.min(
         1,
@@ -109,13 +115,14 @@ export function staticDither(
   color: string,
   cell = 5,
   invert = false,
+  floor = 0.08,
 ) {
   const box = canvas.getBoundingClientRect()
   const scale = Math.min(2, window.devicePixelRatio || 1)
   const W = Math.max(1, Math.round((box.width || canvas.clientWidth || 300) * scale))
   const H = Math.max(1, Math.round((box.height || canvas.clientHeight || 200) * scale))
-  const step = Math.max(3, Math.round(cell * scale))
-  const dots = buildDots(img, W, H, step, invert)
+  const step = Math.max(3, Math.round(cell * (scale > 1.4 ? 1.5 : scale)))
+  const dots = buildDots(img, W, H, step, invert, floor)
   if (!dots) return false
   canvas.width = W
   canvas.height = H
@@ -138,6 +145,7 @@ export function animateDither(
     duration?: number
     reverse?: boolean
     invert?: boolean
+    floor?: number
     onProgress?: (t: number) => void
     onDone?: () => void
   } = {},
@@ -147,6 +155,7 @@ export function animateDither(
     duration = 900,
     reverse = false,
     invert = false,
+    floor = 0.08,
     onProgress,
     onDone,
   } = opts
@@ -154,8 +163,8 @@ export function animateDither(
   const scale = Math.min(2, window.devicePixelRatio || 1)
   const W = Math.max(1, Math.round((box.width || 300) * scale))
   const H = Math.max(1, Math.round((box.height || 200) * scale))
-  const step = Math.max(3, Math.round(cell * scale))
-  const dots = buildDots(img, W, H, step, invert)
+  const step = Math.max(3, Math.round(cell * (scale > 1.4 ? 1.5 : scale)))
+  const dots = buildDots(img, W, H, step, invert, floor)
   const ctx = canvas.getContext('2d')
   if (!dots || !ctx) {
     onProgress?.(reverse ? 0 : 1)
