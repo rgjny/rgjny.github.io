@@ -151,6 +151,7 @@ export type SocialLinks = {
   twitter?: string
   mastodon?: string
   bluesky?: string
+  hackerone?: string
   linkedin?: string
   email?: string
   rss?: boolean

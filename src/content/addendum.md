@@ -1,7 +1,7 @@
 ---
 avatarImage:
-  src: './lain.jpg'
+  src: './lain-bear.jpg'
   alt: 'quote'
 ---
 
-Present Day, Present Time! HAHAHAHA!
+"If you're not remembered, then you never existed"

@@ -40,44 +40,104 @@ const filteredHeadings = headings.filter(({ depth }) => depth >= 2 && depth <= 3
 </details>
 
 <script>
-  const tocWindow = window as Window & { tocObserver?: IntersectionObserver }
+  const tocWindow = window as Window & {
+    tocObserver?: IntersectionObserver
+    tocResizeHandler?: () => void
+  }
 
   function initTableOfContents() {
     tocWindow.tocObserver?.disconnect()
+    if (tocWindow.tocResizeHandler) {
+      window.removeEventListener('resize', tocWindow.tocResizeHandler)
+    }
 
     const toc = document.getElementById('toc') as HTMLDetailsElement | null
-    if (toc) {
-      // Desktop (>= 1280px) gets sticky open sidebar; mobile defaults collapsed so post starts immediately
+    if (!toc) return
+
+    const applyLayoutState = () => {
       if (window.innerWidth >= 1280) {
         toc.open = true
       } else {
         toc.open = false
       }
-
-      // On mobile, auto-close the drawer when tapping a section link
-      toc.querySelectorAll('.toc-link').forEach((link) => {
-        link.addEventListener('click', () => {
-          if (window.innerWidth < 1280) {
-            toc.open = false
-          }
-        })
-      })
     }
+    applyLayoutState()
+
+    tocWindow.tocResizeHandler = () => {
+      if (window.innerWidth >= 1280) {
+        toc.open = true
+      }
+    }
+    window.addEventListener('resize', tocWindow.tocResizeHandler)
+
+    // Prevent accidental toggling of details on desktop when clicking summary header
+    const summary = toc.querySelector<HTMLElement>('.toc-summary')
+    summary?.addEventListener('click', (e) => {
+      if (window.innerWidth >= 1280) {
+        e.preventDefault()
+      }
+    })
+
+    // Smooth transition / scrolling when clicking TOC links
+    toc.querySelectorAll<HTMLAnchorElement>('.toc-link').forEach((link) => {
+      link.addEventListener('click', (e) => {
+        const href = link.getAttribute('href')
+        if (!href || !href.startsWith('#')) return
+        const targetId = decodeURIComponent(href.slice(1))
+        const targetEl = document.getElementById(targetId)
+        if (!targetEl) return
+
+        e.preventDefault()
+
+        // Push URL state without jump
+        history.pushState(null, '', href)
+
+        // Clear header clearance (85px)
+        const headerOffset = 85
+        const targetTop =
+          targetEl.getBoundingClientRect().top + window.pageYOffset - headerOffset
+
+        window.scrollTo({
+          top: targetTop,
+          behavior: 'smooth',
+        })
+
+        // On mobile, close drawer after selection
+        if (window.innerWidth < 1280) {
+          toc.open = false
+        }
+      })
+    })
 
     const anchors = [...document.querySelectorAll<HTMLElement>('h2[id], h3[id]')]
     const links = [...document.querySelectorAll<HTMLElement>('.toc-list > li')]
 
     const topBtn = document.querySelector<HTMLButtonElement>('.toc-top')
-    topBtn?.addEventListener('click', () =>
-      window.scrollTo({ top: 0, behavior: 'smooth' }),
-    )
+    topBtn?.addEventListener('click', (e) => {
+      e.preventDefault()
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      if (window.innerWidth < 1280) {
+        toc.open = false
+      }
+    })
 
     if (anchors.length !== links.length || anchors.length === 0) return
 
     const setActive = (index: number) => {
-      links.forEach((link, linkIndex) =>
-        link.classList.toggle('active-heading', linkIndex === index),
-      )
+      links.forEach((link, linkIndex) => {
+        const isActive = linkIndex === index
+        link.classList.toggle('active-heading', isActive)
+        // Keep active heading visible inside TOC scroll viewport on desktop
+        if (isActive && window.innerWidth >= 1280) {
+          const tocRect = toc.getBoundingClientRect()
+          const linkRect = link.getBoundingClientRect()
+          if (linkRect.top < tocRect.top + 36) {
+            toc.scrollTop -= tocRect.top + 36 - linkRect.top
+          } else if (linkRect.bottom > tocRect.bottom - 24) {
+            toc.scrollTop += linkRect.bottom - (tocRect.bottom - 24)
+          }
+        }
+      })
     }
 
     tocWindow.tocObserver = new IntersectionObserver(
@@ -87,14 +147,17 @@ const filteredHeadings = headings.filter(({ depth }) => depth >= 2 && depth <= 3
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
         if (visible) setActive(anchors.indexOf(visible.target as HTMLElement))
       },
-      { rootMargin: '-12% 0px -72% 0px', threshold: 0 },
+      { rootMargin: '-70px 0px -65% 0px', threshold: 0 },
     )
 
     anchors.forEach((anchor) => tocWindow.tocObserver?.observe(anchor))
   }
 
   document.addEventListener('astro:page-load', initTableOfContents)
-  document.addEventListener('astro:before-swap', () =>
-    tocWindow.tocObserver?.disconnect(),
-  )
+  document.addEventListener('astro:before-swap', () => {
+    tocWindow.tocObserver?.disconnect()
+    if (tocWindow.tocResizeHandler) {
+      window.removeEventListener('resize', tocWindow.tocResizeHandler)
+    }
+  })
 </script>

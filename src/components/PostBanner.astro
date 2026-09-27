@@ -87,10 +87,7 @@ const mode = cover ? 'image' : 'art'
       <div class="pm-cell">
         <>
           <dt>No.</dt>
-          <dd class="pm-no">
-            <span class="pm-tick" />
-            {noStr}
-          </dd>
+          <dd class="pm-no">{noStr}</dd>
         </>
       </div>
     )
@@ -102,16 +99,6 @@ const mode = cover ? 'image' : 'art'
         <>
           <dt>Length</dt>
           <dd>{minutes} min</dd>
-        </>
-      </div>
-    )
-  }
-  {
-    words != null && (
-      <div class="pm-cell">
-        <>
-          <dt>Words</dt>
-          <dd>{words.toLocaleString()}</dd>
         </>
       </div>
     )
@@ -238,9 +225,11 @@ const mode = cover ? 'image' : 'art'
     // flush — reading the computed color in the same tick as the attribute
     // change returns the previous theme's ink.
     bannerWin.pbThemeObs?.disconnect()
-    bannerWin.pbThemeObs = new MutationObserver(() =>
-      requestAnimationFrame(repaintDithered),
-    )
+    bannerWin.pbThemeObs = new MutationObserver(() => {
+      requestAnimationFrame(repaintDithered)
+      setTimeout(repaintDithered, 150)
+      setTimeout(repaintDithered, 500)
+    })
     bannerWin.pbThemeObs.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['data-theme'],

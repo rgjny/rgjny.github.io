@@ -3,6 +3,7 @@ import type { SocialLinks } from '~/types'
 import IconGithub from '~/icons/github.svg'
 import IconMastodon from '~/icons/mastodon.svg'
 import IconTwitter from '~/icons/twitter.svg'
+import IconHackerone from '~/icons/hackerone.svg'
 import IconLinkedin from '~/icons/linkedin.svg'
 import IconBluesky from '~/icons/bluesky.svg'
 import IconEmail from '~/icons/email.svg'
@@ -82,6 +83,14 @@ const levelColor = (lvl: number) =>
         <p class="pop-bio">Bug-bounty hunter. Web, mobile &amp; cloud. I write up the bugs with a story behind them.</p>
         <span class="pop-cta">View profile ↗</span>
       </div>
+    </div>
+  )}
+  {socialLinks.hackerone && (
+    <div class="social-item">
+      <a href={socialLinks.hackerone} target="_blank" rel="noopener noreferrer" class="social-link" title="HackerOne">
+        <span class="sr-only">HackerOne</span>
+        <IconHackerone class="size-5" />
+      </a>
     </div>
   )}
   {socialLinks.linkedin && (

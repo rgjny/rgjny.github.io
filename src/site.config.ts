@@ -39,8 +39,10 @@ const config: SiteConfig = {
   },
   socialLinks: {
     github: 'https://github.com/rgjny',
-    email: 'rgjnymail@proton.me',
     twitter: 'https://x.com/rgjny_',
+    hackerone: 'https://hackerone.com/rgjny',
+    linkedin: 'https://www.linkedin.com/in/itsrgjny/',
+    email: 'rgjnymail@proton.me',
     rss: false,
   },
 }

@@ -78,36 +78,42 @@ const publishedStr = postData.published
   tags={postData.tags}
 >
   <article class="max-w-full py-2 min-w-0" data-pagefind-body>
-    <PostBanner
-      seed={post.id}
-      no={postNo}
-      date={publishedStr}
-      minutes={remarkPluginFrontmatter.minutes}
-      words={remarkPluginFrontmatter.wordsCount}
-      cover={postData.coverImage?.src}
-      coverAlt={postData.coverImage?.alt}
-    />
-    <div class="md:mx-2 min-w-0">
-      <h1
-        id={post.id}
-        class="mb-4 text-2xl sm:text-[1.9rem] text-heading1 font-semibold break-words"
-      >
-        {postData.title}
-      </h1>
-      {
-        tags && (
-          <div class="mb-2">
-            <Tags tags={tags} />
-          </div>
-        )
-      }
+    <div class="post-header-region">
+      <PostBanner
+        seed={post.id}
+        no={postNo}
+        date={publishedStr}
+        minutes={remarkPluginFrontmatter.minutes}
+        words={remarkPluginFrontmatter.wordsCount}
+        cover={postData.coverImage?.src}
+        coverAlt={postData.coverImage?.alt}
+      />
+      <div class="post-title-wrapper min-w-0">
+        <h1
+          id={post.id}
+          class="mb-4 text-2xl sm:text-[1.9rem] text-heading1 font-semibold break-words"
+        >
+          {postData.title}
+        </h1>
+        {
+          tags && (
+            <div class="mb-2">
+              <Tags tags={tags} />
+            </div>
+          )
+        }
+      </div>
     </div>
     <!-- <hr class="border-accent/10 border-2 rounded-xl hidden lg:block" /> -->
-    <div
-      class="flex flex-col xl:gap-1 2xl:gap-18 xl:flex-row xl:items-start min-w-0 w-full"
-    >
-      {postData.toc && headings.length > 0 && <TableOfContents headings={headings} />}
-      <div class="mb-5 min-w-0 w-full prose">
+    <div class="post-body-layout">
+      {
+        postData.toc && headings.length > 0 && (
+          <aside class="post-toc-sidebar">
+            <TableOfContents headings={headings} />
+          </aside>
+        )
+      }
+      <div class="mb-5 min-w-0 w-full prose post-prose-container">
         <PostContent />
       </div>
     </div>
@@ -123,36 +129,38 @@ const publishedStr = postData.published
       </a>
     )
   }
-  {
-    AddendumContent && (
-      <PostAddendum avatarImage={addendumAvatarImage}>
-        <AddendumContent />
-      </PostAddendum>
-    )
-  }
-  {
-    showSeries && series ? (
-      <section>
-        <DividerText text={`${series.title} Series`} />
-        {series.entries.map((seriesPost) => (
-          <PostPreview post={seriesPost} />
-        ))}
-      </section>
-    ) : prev || next ? (
-      <section>
-        <DividerText text="More Posts" />
-        {prev && <PostPreview post={prev} />}
-        {next && <PostPreview post={next} />}
-      </section>
-    ) : null
-  }
-  {
-    siteConfig.giscus && (
-      <section>
-        <DividerText text="Comments" />
-        <GiscusLoader />
-      </section>
-    )
-  }
+  <div class="post-footer-region max-w-[44rem] mx-auto w-full">
+    {
+      AddendumContent && (
+        <PostAddendum avatarImage={addendumAvatarImage}>
+          <AddendumContent />
+        </PostAddendum>
+      )
+    }
+    {
+      showSeries && series ? (
+        <section>
+          <DividerText text={`${series.title} Series`} />
+          {series.entries.map((seriesPost) => (
+            <PostPreview post={seriesPost} />
+          ))}
+        </section>
+      ) : prev || next ? (
+        <section>
+          <DividerText text="More Posts" />
+          {prev && <PostPreview post={prev} />}
+          {next && <PostPreview post={next} />}
+        </section>
+      ) : null
+    }
+    {
+      siteConfig.giscus && (
+        <section>
+          <DividerText text="Comments" />
+          <GiscusLoader />
+        </section>
+      )
+    }
+  </div>
   <ScrollUpButton />
 </Layout>
